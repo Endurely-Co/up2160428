@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/login.css' />
+    <link rel='stylesheet' href='/stylesheets/toast.css' />
+    <link rel='stylesheet' href='/stylesheets/button.css' />
+</head>
+<body>
+
+<h2>Register</h2>
+
+<form id="createUserForm">
+    <div class="imgcontainer">
+        <img src="https://www.w3schools.com/howto/img_avatar2.png"
+             alt="Avatar" class="avatar" style="width:200px;height: 200px">
+    </div>
+
+    <div class="container">
+        <label for="email"><b>Email Address</b></label>
+        <input type="text" placeholder="Enter Email" id="email" name="email" required>
+
+        <label for="name"><b>Full name</b></label>
+        <input type="text" id="name" placeholder="Enter Full Name" name="name" required>
+
+        <!--        <label for="psw"><b>Password</b></label>-->
+        <!--        <input type="password" placeholder="Enter Password" name="psw" required>-->
+        <fieldset>
+            <legend>What are you signing up for:</legend>
+            <div>
+                <input type="radio" id="organiserChoice" name="userType" value="organiser" />
+                <label for="organiserChoice">Organiser</label>
+
+                <input type="radio" id="volunteerChoice" name="userType" value="volunteer" />
+                <label for="volunteerChoice">Volunteer</label>
+
+                <input type="radio" id="runnerChoice" name="userType" value="runner" />
+                <label for="runnerChoice">Runner</label>
+            </div>
+        </fieldset>
+        <button type="submit">Sign Up</button>
+    </div>
+
+</form>
+<div id="toast" class="toast"></div>
+
+<script src="/javascripts/register.js"></script>
+<!--<script src="./toast.js"></script>-->
+</body>
+</html>
