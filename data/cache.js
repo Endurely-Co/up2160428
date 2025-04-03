@@ -17,6 +17,10 @@ function setLogOut(){
     localStorage.removeItem(userEmail);
 }
 
+function clear(){
+    localStorage.clear();
+}
+
 module.exports = {
-    setLogIn, getLogIn, setLogOut
+    setLogIn, getLogIn, setLogOut, clear
 }

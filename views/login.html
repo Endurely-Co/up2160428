@@ -66,9 +66,8 @@
             },
         }).then((res) => res.json())
             .then((data) => {
-                console.log('new_data', data);
                 if(data.error){
-                    showToast("", "error");
+                    showToast(data.error.error, "error");
                 }else{
                     const curPath = window.location.pathname;
                     if(data.redirect_url !== curPath){
@@ -76,7 +75,7 @@
                     }
                 }
             }).catch((err) => {
-            console.log('User not logged in', 'error');
+            console.log(`User not logged in: ${err}`, 'error');
         });
     }
 

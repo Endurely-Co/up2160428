@@ -5,9 +5,9 @@ const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, user_i
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
-const updateUserLogin = `UPDATE users SET isLoggedIn = ? WHERE email = ? AND name = ?`;
+const updateUserLogin = `UPDATE users SET isLoggedIn = ? WHERE email = ?`;
 
-const queryForUser = `SELECT * FROM users WHERE email = ? AND name = ?`;
+const queryForUser = `SELECT * FROM users WHERE email = ?`;
 
 const queryCheckedLogIn = `SELECT isLoggedIn FROM users WHERE email = ?`;
 
@@ -19,26 +19,28 @@ const requestLatestRace = database.prepare(latestRace);
 
 const createNewRace = database.prepare(newRace);
 
-function checkLoggedIn() {
+async function checkLoggedIn() {
     const email = cache.getLogIn();
     console.log('new_data_email', email);
-    if (email === undefined) {
+
+    if (email === null) {
         return {
-            error: "User is not signed in!",
+            error: {
+               error: "User is not signed in!"
+            }
         }
     }
-    const hasLoggedIn = database.prepare(queryCheckedLogIn).get(email);
+    const hasLoggedIn = await database.prepare(queryCheckedLogIn).get(email);
     return {
         user_logged_in: hasLoggedIn,
         redirect_url: '/'
     };
 }
 
-function createNewUser(email, name, userType){
+async function createNewUser(email, name, userType){
     try{
-        const insert = database.prepare(insertNewUser);
+        const insert = await database.prepare(insertNewUser);
         const newUser = insert.get(name, email, 'true', userType);
-        console.log(newUser.id);
         return {
             id: newUser.id,
             name: newUser.name,
@@ -51,14 +53,23 @@ function createNewUser(email, name, userType){
     }
 }
 
-function loginUser(email, name){
+async function invalidateUser() {
+    const email = cache.getLogIn();
+    cache.clear();
+    await changeUserStatus(email, false);
+    return {
+        message: 'User has been logged out'
+    };
+}
+
+async function changeUserStatus(email, isLoggedIn = true){
     const query = database.prepare(queryForUser);
-    const user = query.get(email, name);
+    const user = isLoggedIn ? query.get(email) : undefined;
+    console.log('new_data_email1', user, email, isLoggedIn);
     if (user !== undefined){
-        const signUserIn = database.prepare(updateUserLogin);
-        signUserIn.get('true', name, email); // Update log in
+        const signUserIn = await database.prepare(updateUserLogin);
+        signUserIn.get(isLoggedIn.toString(), email); // Update log in
         cache.setLogIn(email);
-        console.log('user', cache.getLogIn());
         return {
             id: user.id,
             name: user.name,
@@ -68,12 +79,12 @@ function loginUser(email, name){
         }
     }
     return {
-        error: "User not found",
+        error: "User not logged in",
     };
 }
 
 module.exports = {
-    createNewRace, loginUser,
+    createNewRace, changeUserStatus,
     requestLatestRace, createNewUser,
-    checkLoggedIn
+    checkLoggedIn, invalidateUser
 };

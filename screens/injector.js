@@ -3,6 +3,7 @@ const paths = [
     require('./index'),
     require('./onboard'),
     require('./users'),
+    require('./race'),
 ];
 
 // Inject all api screens

@@ -8,24 +8,31 @@ const db = require('../data/queries');
 
 router.post('/login', async (req, res) => {
     try{
-        let { email, name} = req.body;
-        const result = await db.loginUser(email, name);
+        let { email, name} = req.body; // remove name from login
+        const result = await db.changeUserStatus(email);
         result['redirectUrl'] = '/';
-        res.status(200).send(result);
+        return res.status(200).send(result);
     }catch (error){
         console.log(error)
-        res.status(500).send({ error: "Internal Server Error"  });
+        return res.status(500).send({ error: "Internal Server Error"  });
     }
 });
 
 router.post('/create_user', async (req, res) => {
     let { email, name, user_type } = req.body;
-    res.status(201).json(db.createNewUser(email, name, user_type))
+    const signUp = await db.createNewUser(email, name, user_type);
+    res.status(201).json(signUp)
 });
 
-router.post('/check-login', async (req, res) => {
-    res.status(200).json(db.checkLoggedIn());
-})
+router.get('/check-login', async (req, res) => {
+    res.status(200).json(await db.checkLoggedIn());
+});
+
+router.get('/logout', async (req, res) => {
+    const signOut = await db.invalidateUser();
+    signOut['redirect_url'] = '/login'
+    res.status(200).json(signOut)
+});
 
 
 module.exports = router;
