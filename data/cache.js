@@ -9,7 +9,7 @@ function setLogIn(email){
     localStorage.setItem(userEmail, email);
 }
 
-function getLogIn() : String{
+function getLogIn(){
     return localStorage.getItem(userEmail);
 }
 
