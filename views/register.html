@@ -44,7 +44,61 @@
 </form>
 <div id="toast" class="toast"></div>
 
-<script src="/javascripts/register.js"></script>
-<!--<script src="./toast.js"></script>-->
+<script>
+
+    const form = document.getElementById('createUserForm')
+    const toast = document.getElementById('toast');
+
+    // function showToast(message, type){
+    //     toast.textContent = message;
+    //     if(type === 'success'){
+    //         toast.style.backgroundColor = 'green';
+    //     }else{
+    //         toast.style.backgroundColor = 'red';
+    //     }
+    //     toast.className = 'toast show';
+    //
+    //     setTimeout((event) => {
+    //         toast.className = 'toast';
+    //     }, 3000);
+    // }
+
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const userType = document.querySelector('input[name=userType]:checked');
+
+        const formData = {
+            email: document.getElementById('email').value,
+            name: document.getElementById('name').value,
+            user_type: userType.value,
+        }
+        fetch('/api/create_user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => {
+                return response.json()
+            })
+            .then(data =>{
+                if(data.error){
+                    showToast(data.error, 'error');
+                }else{
+                    // showToast('User added successfully',
+                    //     'success '+ data.redirectUrl);
+                    window.location.href =data.redirectUrl;
+                    form.reset();
+                }
+            })
+            .catch(err =>{
+                showToast('An unexpected error occurred!', 'error');
+            });
+    });
+
+</script>
 </body>
 </html>

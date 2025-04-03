@@ -1,3 +1,4 @@
+const toast = document.getElementById('toast');
 
 function showToast(message, type){
     toast.textContent = message;
@@ -13,4 +14,3 @@ function showToast(message, type){
     }, 3000);
 }
 
-module.exports = {showToast }

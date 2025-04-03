@@ -3,6 +3,9 @@ let path = require('path');
 let cookieParser = require('cookie-parser');
 let logger = require('morgan');
 
+const { LocalStorage } = require('node-localstorage');
+const localStorage = new LocalStorage('./scratch'); // Stores data in a file
+
 const apiInjector = require('./api/injector');
 const screenInjector = require('./screens/injector');
 const fs = require("fs");
@@ -13,12 +16,13 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use('/controller', express.static(path.join(__dirname, 'controller')));
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'html'); // Set default engine to HTML
-app.engine('html', vieEngine);
+app.engine('html', viewEngine);
 
-function vieEngine(filePath, options, callback){
+function viewEngine(filePath, options, callback){
     const fs = require('fs');
     fs.readFile(filePath, 'utf-8', (err, content) => {
         if (err) return callback(err);

@@ -1,11 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/login', function(req, res, next) {
+const Pages = {
+    login : '/login',
+    register : '/register'
+}
+
+
+router.get(Pages.login, function(req, res, next) {
     res.render('login', { title: 'Login' });
 });
 
-router.get('/register', function(req, res, next) {
+router.get(Pages.register, function(req, res, next) {
     res.render('register', { title: 'Register' });
 });
 

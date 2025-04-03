@@ -1,8 +1,15 @@
-const {showToast} = require('./toast')
+const {showToast} = require('./toast');
 
-const form = document.getElementById('createUserForm')
-const toastView = document.getElementById('toast');
+// const Pages = require("../../screens/onboard");
 
+const form = document.getElementById('createUserForm');
+const signupBtn = document.getElementById('signupBtn');
+
+
+signupBtn.addEventListener('click', () => {
+    console.log('Signup clicked');
+    window.location.href = '/register';
+});
 
 form.addEventListener('submit', (e) => {
     e.preventDefault();

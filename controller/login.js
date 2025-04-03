@@ -1,25 +1,20 @@
-const {showToast} = require('./toast');
+let {get} = require("./methods")
 
 const form = document.getElementById('createSignInForm');
 const signupBtn = document.getElementById('signupBtn');
 const toast = document.getElementById('toast');
 const status = "<%= status%>";
 
-function checkLogin(){
-    fetch('/api/check-login', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    }).then((res) => res.json())
+async function checkLogin () {
+    get('/api/check-login').then((res) => res.json())
         .then((data) => {
             if(data.error){
-                showToast("", "error");
+                window.toast.showToast("", "error");
             }else{
                 const curPath = window.location.pathname;
-                if(data.redirect_url !== curPath){
-                    window.location.href = data.redirect_url;
-                }
+                // if(data.redirect_url !== curPath){
+                //     window.location.href = data.redirect_url;
+                // }
             }
         }).catch((err) => {
         console.log('User not logged in', 'error');
@@ -27,8 +22,8 @@ function checkLogin(){
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    checkLogin();
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkLogin();
 });
 
 signupBtn.addEventListener('click', () => {
