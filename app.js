@@ -3,9 +3,6 @@ let path = require('path');
 let cookieParser = require('cookie-parser');
 let logger = require('morgan');
 
-const { LocalStorage } = require('node-localstorage');
-const localStorage = new LocalStorage('./scratch'); // Stores data in a file
-
 const apiInjector = require('./api/injector');
 const screenInjector = require('./screens/injector');
 const fs = require("fs");
@@ -21,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'html'); // Set default engine to HTML
 app.engine('html', viewEngine);
+
 
 function viewEngine(filePath, options, callback){
     const fs = require('fs');
