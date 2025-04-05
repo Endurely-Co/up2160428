@@ -1,12 +1,19 @@
-
-const { LocalStorage } = require('node-localstorage');
-const {createNewRace} = require("./queries");
+import {LocalStorage} from 'node-localstorage';
 const localStorage = new LocalStorage('./scratch'); // Stores data in a file
 
-const userEmail = 'user_email'
+const userEmail = 'user_email';
+const userType = 'user_type';
 
 function setLogIn(email){
     localStorage.setItem(userEmail, email);
+}
+
+function setUserType(type){
+    localStorage.setItem(userType, type);
+}
+
+function getUserType(){
+    return localStorage.getItem(userType);
 }
 
 function getLogIn(){
@@ -21,6 +28,4 @@ function clear(){
     localStorage.clear();
 }
 
-module.exports = {
-    setLogIn, getLogIn, setLogOut, clear
-}
+export default { setLogIn, getLogIn, setLogOut, clear };

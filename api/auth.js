@@ -1,6 +1,6 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const db = require('../data/queries');
+import db from '../data/queries.js';
 
 // router.get('/login', function(req, res, next) {
 //     res.send('Logged in!');
@@ -21,6 +21,7 @@ router.post('/login', async (req, res) => {
 router.post('/create_user', async (req, res) => {
     let { email, name, user_type } = req.body;
     const signUp = await db.createNewUser(email, name, user_type);
+    signUp['redirect_url'] = '/';
     res.status(201).json(signUp)
 });
 
@@ -35,4 +36,4 @@ router.get('/logout', async (req, res) => {
 });
 
 
-module.exports = router;
+export default router;

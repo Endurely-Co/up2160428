@@ -1,16 +1,17 @@
 // Add every api that needs to be provided here
 const paths = [
-    require('./index'),
-    require('./onboard'),
-    require('./users'),
-    require('./race'),
+    './index.js',
+    './onboard.js',
+    './users.js',
+    './race.js'
 ];
 
 // Inject all api screens
-function inject(app){
-    paths.forEach(path => {
-        if (typeof path === 'function'){
-            app.use('/', path);
+async function inject(app){
+    const resolvePaths = await Promise.all(paths.map(path => import(path)));
+    resolvePaths.forEach(path => {
+        if (path.default && typeof path.default === 'function'){
+            app.use('/', path.default);
         }else{
             console.warn('Invalid route', path);
         }
@@ -18,4 +19,4 @@ function inject(app){
 }
 
 
-module.exports = {inject};
+export default inject;

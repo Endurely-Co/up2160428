@@ -1,221 +1,59 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= title %></title>
-  <link rel='stylesheet' href='/stylesheets/dashboard.css' />
-  <link rel='stylesheet' href='/stylesheets/navbar.css' />
-  <link rel="stylesheet" href="/stylesheets/race.css">
+    <link rel='stylesheet' href='/stylesheets/navbar.css' />
+    <title>Title</title>
 </head>
-<body id="createSignInForm">
-<div class="topnav">
-  <a class="active" href="/">Home</a>
-  <a href="/new-race">Add Race</a>
-  <a id='logout'>Sign out</a>
+<body>
+<div class="topnav" id="topnav">
+    <a class="active" id="home-page">Home</a>
+    <a id="new-race-page">Add Race</a>
+    <a id='logout'>Sign out</a>
 </div>
-
-<div id="timerContainer" class="timer-container">
-  <p class="timer" id="timer">00:00:00.000</p>
-  <div class="controls">
-    <button id="startPause" type="button" class="ctr-button start">Start</button>
-    <button id="lapse" type="button" class="ctr-button lap">Lapse</button>
-    <button id="stop" type="button" class="ctr-button stop">Stop</button>
-  </div>
-  <div id="lapses-container"></div>
-
-  <div>
-    <ul id="lapses"></ul>
-  </div>
-
+<div id="content">
 </div>
-
-<div class="toast" id="toast"></div>
-
 <script>
-  const logoutBtn = document.getElementById('logout')
-  const toast = document.getElementById('toast');
-  const startBtn = document.getElementById('startPause');
-  const stopBtn = document.getElementById('stop');
-  const lapseBtn = document.getElementById('lapse');
-  const timer = document.getElementById('timer');
-  const lapsesNode = document.getElementById('lapses');
-  const lapsesContainer = document.getElementById('lapses-container');
-  // const lapseTemplate = document.getElementById("template");
+    const content = document.getElementById("content");
+    const raceDashboard = document.getElementById("race-dashboard");
+    const newRace = document.getElementById("new-race");
 
-  // let lapses = [];
-  let intervalId;
-  let startedTime = null;
-  let elapsedTime =0;
-  let clockNow =0;
-  let isRunning = false;
-  const startText = 'Start';
+    const homePage = document.getElementById("home-page");
+    const newRacePage = document.getElementById("new-race-page");
+    let pageFrag = undefined;
 
-  lapseBtn.addEventListener('click', addNewLapse);
-
-  let lapCount = 0;
-
-  function addNewLapse(event){
-    if (isRunning){
-      lapCount += 1;
-      let li = document.createElement('ol');
-      li.className = 'rounded-list';
-      li.appendChild(document.createTextNode(`Lap ${lapCount}: ` + timer.textContent));
-      lapsesNode.appendChild(li);
-    }
-  }
-
-  function pauseTimer() {
-    if(isRunning && intervalId){
-      startBtn.textContent = "Resume";
-      clearInterval(intervalId);
-      intervalId = null;
-      elapsedTime = Date.now() - startedTime;
-      console.log("pause", clockNow);
-      isRunning = false;
-    }
-  }
-
-
-
-  function startTimer() {
-    if(!isRunning && !intervalId){
-      startedTime = Date.now() - elapsedTime;
-      intervalId = setInterval(updateClock, 10)
-      startBtn.textContent = "Pause"
-      isRunning = true;
-    }
-  }
-
-  function stopTimer() {
-    startBtn.textContent = startText
-    clearInterval(intervalId);
-    elapsedTime = 0;
-    startedTime =0;
-    isRunning = false;
-    intervalId = null;
-
-    while (lapsesNode.hasChildNodes()){
-      lapsesNode.removeChild(lapsesNode.firstChild);
-    }
-    updateClock(true);
-  }
-
-  function updateClock(reset = false) {
-    if(reset){
-      timer.textContent = '00:00:00.000';
-      return;
-    }
-    const clockNow = new Date(Date.now() - startedTime);
-    timer.textContent = `${padTime(clockNow.getUTCHours())}:${padTime(clockNow.getUTCMinutes())}:${padTime(clockNow.getUTCSeconds())}.${padTimeMs(clockNow.getMilliseconds())}`;
-  }
-
-  function padTimeMs(value){
-    const valueStr = value.toString();
-
-    if(valueStr.length < 2){
-      return `00${value}`;
-    }
-    if(valueStr.length < 3){
-      return `0${value}`;
-    }
-
-    return `${value}`;
-  }
-
-  function padTime(value){
-    if(value < 10){
-      return `0${value}`;
-    }
-    return `${value}`;
-  }
-
-  Number.prototype.toTimeString = function(seconds) {
-    let twentyFourHrs = 8.64e7;  // 24*60*60*1000
-
-    let ms = seconds ? this * 1000 : this,
-            endPos = ~(4 * !!seconds),  // to trim "Z" or ".sssZ"
-            timeString = new Date(ms).toISOString().slice(11, endPos);
-
-    if (ms >= twentyFourHrs) {  // to extract ["hh", "mm:ss[.mss]"]
-      let parts = timeString.split(/:(?=\d{2}:)/);
-      parts[0] -= -24 * Math.floor(ms / twentyFourHrs);
-      timeString = parts.join(":");
-    }
-
-    return timeString;
-  };
-
-  startBtn.addEventListener('click', () =>{
-    console.log('start');
-    if([startText, 'Resume'].includes(startBtn.textContent)){
-      startTimer();
-    }else{
-      pauseTimer();
-    }
-  });
-
-  stopBtn.addEventListener('click', stopTimer);
-
-
-  // `00:00:00.000`
-
-  function checkLogin(){
-    fetch('/api/check-login', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then((res) => res.json())
-            .then((data) => {
-              if(data.error){
-                showToast("", "error");
-              }else{
-                const curPath = window.location.pathname;
-                if(data.redirect_url !== curPath){
-                  window.location.href = data.redirect_url;
+    function loadPage(htmlUrl) {
+        fetch(htmlUrl)
+            .then((response) => response.text())
+            .then((html) => {
+                console.log('DOM fully loaded and parsed');
+                const pageFrag = document.createRange().createContextualFragment(html);
+                if(content.children.length > 0){
+                    content.removeChild(content.lastChild);
+                }else{
+                    content.appendChild(pageFrag);
                 }
-              }
-            }).catch((err) => {
-      console.log('User not logged in', 'error');
-    });
-  }
 
+                content.innerHTML = html;
+            }).catch((error) => {
+                console.warn(error);
+        });
 
-  document.addEventListener('DOMContentLoaded', () => {
-    checkLogin();
-  });
-
-  function showToast(message, type){
-    toast.textContent = message;
-    if(type === 'success'){
-      toast.style.backgroundColor = 'green';
-    }else{
-      toast.style.backgroundColor = 'red';
     }
-    toast.className = 'toast show';
 
-    setTimeout((event) => {
-      toast.className = 'toast';
-    }, 3000);
-  }
-
-
-  logoutBtn.addEventListener('click', () => {
-    fetch('/api/logout', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }).then(res => res.json())
-            .then(data => {
-              window.location.href = data.redirect_url;
-            }).catch(err => {
-      showToast(err, 'error');
+    document.addEventListener("DOMContentLoaded", () => {
+        loadPage('dashboard');
     });
 
-  });
+    homePage.onclick = function () {
+        loadPage('dashboard');
+    }
+
+    newRacePage.onclick = function () {
+        loadPage('new-race');
+    }
+
 </script>
 
-</body>
 
+</body>
 </html>

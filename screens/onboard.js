@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 const Pages = {
@@ -15,5 +15,4 @@ router.get(Pages.register, function(req, res, next) {
     res.render('register', { title: 'Register' });
 });
 
-
-module.exports = router;
+export default router;

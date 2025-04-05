@@ -1,9 +1,12 @@
-const database = require("./model");
-const cache = require("./cache");
+import database from "./model.js";
+import cache from "./cache.js";
 
-const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, user_id) VALUES($1, $2, $3, $4, $5)`;
+
+const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email) VALUES(?, ?, ?, ?, ?)`;
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
+
+const allRaces = `SELECT * FROM race ORDER BY start_time`;
 
 const updateUserLogin = `UPDATE users SET isLoggedIn = ? WHERE email = ?`;
 
@@ -15,9 +18,22 @@ const insertNewUser = `INSERT INTO users (name, email, isLoggedIn, user_type) VA
 RETURNING id, name, email, isLoggedIn, user_type`;
 
 
-const requestLatestRace = database.prepare(latestRace);
+ async function requestLatestRace(){
+    const recent = await database.prepare(latestRace);
+    return recent.all()[0];
+}
 
-const createNewRace = database.prepare(newRace);
+async function createNewRace(email, name, cutoff_time, start_time,  loop_km){
+    const race = await database.prepare(newRace);
+    race.get(name, loop_km, start_time, cutoff_time,  email);
+    return {
+        email : email,
+        name : name,
+        cutoff_time : cutoff_time,
+        start_time : start_time,
+        loop_km:loop_km
+    }
+}
 
 async function checkLoggedIn() {
     const email = cache.getLogIn();
@@ -83,7 +99,7 @@ async function changeUserStatus(email, isLoggedIn = true){
     };
 }
 
-module.exports = {
+export default {
     createNewRace, changeUserStatus,
     requestLatestRace, createNewUser,
     checkLoggedIn, invalidateUser

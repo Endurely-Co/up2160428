@@ -1,9 +1,12 @@
-const {DatabaseSync} = require("node:sqlite");
+import {DatabaseSync} from "node:sqlite";
+import {fileURLToPath} from "url";
+import path from "path";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const database = new DatabaseSync(`${__dirname}/race.db`);
 
 const initDatabase = `
-
     CREATE TABLE IF NOT EXISTS users
     (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -13,7 +16,6 @@ const initDatabase = `
         user_type  TEXT CHECK (user_type IN ('runner', 'volunteer', 'organiser')) NOT NULL
     );
 
-
     CREATE TABLE IF NOT EXISTS race
     (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,11 +24,10 @@ const initDatabase = `
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
         start_time  DATETIME DEFAULT CURRENT_TIMESTAMP,
         cutoff_time INTEGER       NOT NULL, -- Store cutoff time in minutes (or seconds, as per your requirement)
-        user_id     INTEGER,
-        FOREIGN KEY (user_id) REFERENCES users (id)
+        email     VARCHAR(50) NOT NULL
     );
 `
 
 database.exec(initDatabase);
 
-module.exports = database;
+export default database;

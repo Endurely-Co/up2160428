@@ -2,7 +2,7 @@
   "name": "new-webprog",
   "version": "0.0.0",
   "private": true,
-  "module": "commonjs",
+  "type": "module",
   "scripts": {
     "start": "node --experimental-sqlite ./bin/www"
   },
