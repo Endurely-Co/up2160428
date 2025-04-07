@@ -18,8 +18,6 @@
 
     const toast = document.getElementById('toast');
     const content = document.getElementById("content");
-    const curPageTitle = document.getElementById("page-title");
-    const homePage = document.getElementById("home-page");
     let selectedTabId = undefined;
 
     let currentPage = undefined;
@@ -40,6 +38,7 @@
 
 
     document.addEventListener('DOMContentLoaded', function() {
+
         const message = localStorage.getItem('message');
         if(message){
             showToast(message, 'success');
@@ -48,10 +47,25 @@
         addMenus();
     });
 
+    function initialLoad(){
+        let firstLoad = true;
+        for(let i =0; i < topNav.children.length; i++){
+            if(topNav.children[i].classList.contains('active')){
+                firstLoad = false;
+            }
+        }
+        if(firstLoad){
+            console.log('firstLoad', firstLoad);
+            selectedTabId = topNav.children[0].id;
+            loadPage(topNav.children[0].target);
+            topNav.children[0].className = "active";
+        }
+    }
+
     function addMenuClick(){
+
         for(let i = 0; i < topNav.children.length; i++){
             topNav.children[i].addEventListener('click', function(event){
-
                 if(selectedTabId !== topNav.children[i].id){
                     console.log('selectedTab', topNav.children[i].target);
                     if(selectedTabId !== undefined){
@@ -61,7 +75,7 @@
                     topNav.children[i].className = "active";
 
                     // Open page based on selected tab
-                    loadPage(topNav.children[i].target)
+                    loadPage(topNav.children[i].target);
                 }
                 selectedTabId = topNav.children[i].id;
             });
@@ -85,6 +99,7 @@
                 });
 
                 addMenuClick();
+                initialLoad();
             });
     }
 
