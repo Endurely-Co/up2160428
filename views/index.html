@@ -2,55 +2,135 @@
 <html lang="en">
 <head>
     <link rel='stylesheet' href='/stylesheets/navbar.css' />
-    <title>Title</title>
+    <link rel='stylesheet' href='/stylesheets/toast.css' />
+    <title id="page-title">Current Race</title>
 </head>
 <body>
 <div class="topnav" id="topnav">
-    <a class="active" id="home-page">Home</a>
-    <a id="new-race-page">Add Race</a>
-    <a id='logout'>Sign out</a>
+<!--    <a id="new-race-page">Add Race</a>-->
+<!--    <a id='logout'>Sign out</a>-->
 </div>
 <div id="content">
 </div>
+<div id="toast" class="toast"></div>
 <script>
-    const content = document.getElementById("content");
-    const raceDashboard = document.getElementById("race-dashboard");
-    const newRace = document.getElementById("new-race");
+    const topNav = document.getElementById("topnav");
 
+    const toast = document.getElementById('toast');
+    const content = document.getElementById("content");
+    const curPageTitle = document.getElementById("page-title");
     const homePage = document.getElementById("home-page");
-    const newRacePage = document.getElementById("new-race-page");
-    let pageFrag = undefined;
+    let selectedTabId = undefined;
+
+    let currentPage = undefined;
+
+    function showToast(message, type){
+        toast.textContent = message;
+        if(type === 'success'){
+            toast.style.backgroundColor = 'green';
+        }else{
+            toast.style.backgroundColor = 'red';
+        }
+        toast.className = 'toast show';
+
+        setTimeout((event) => {
+            toast.className = 'toast';
+        }, 3000);
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const message = localStorage.getItem('message');
+        if(message){
+            showToast(message, 'success');
+            localStorage.removeItem('message');
+        }
+        addMenus();
+    });
+
+    function addMenuClick(){
+        for(let i = 0; i < topNav.children.length; i++){
+            topNav.children[i].addEventListener('click', function(event){
+
+                if(selectedTabId !== topNav.children[i].id){
+                    console.log('selectedTab', topNav.children[i].target);
+                    if(selectedTabId !== undefined){
+                        document.getElementById(selectedTabId)
+                            .classList.remove('active');
+                    }
+                    topNav.children[i].className = "active";
+
+                    // Open page based on selected tab
+                    loadPage(topNav.children[i].target)
+                }
+                selectedTabId = topNav.children[i].id;
+            });
+        }
+    }
+
+    function addMenus(){
+        fetch('/api/user-type')
+        .then(response => response.json())
+            .then(menuObj => {
+                while (topNav.hasChildNodes() && topNav.children.length > 1){
+                    topNav.removeChild(topNav.lastChild);
+                }
+
+                menuObj.menus.forEach(menu => {
+                    let aMenu = document.createElement('a');
+                    aMenu.textContent = menu.name;
+                    aMenu.id = menu.id
+                    aMenu.target = menu.page;
+                    topNav.appendChild(aMenu);
+                });
+
+                addMenuClick();
+            });
+    }
+
+
+    function removeNode(content){
+        while (content.hasChildNodes()){
+            content.removeChild(content.lastChild);
+        }
+    }
 
     function loadPage(htmlUrl) {
+        if (currentPage === htmlUrl) {
+            return;
+        }
         fetch(htmlUrl)
             .then((response) => response.text())
             .then((html) => {
                 console.log('DOM fully loaded and parsed');
                 const pageFrag = document.createRange().createContextualFragment(html);
-                if(content.children.length > 0){
-                    content.removeChild(content.lastChild);
-                }else{
-                    content.appendChild(pageFrag);
-                }
-
-                content.innerHTML = html;
+                removeNode(content);
+                content.appendChild(pageFrag);
+               // content.innerHTML = html;
+                currentPage = htmlUrl;
             }).catch((error) => {
                 console.warn(error);
         });
 
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-        loadPage('dashboard');
-    });
+    // document.addEventListener("DOMContentLoaded", () => {
+    //     loadPage('dashboard');
+    // });
 
-    homePage.onclick = function () {
-        loadPage('dashboard');
-    }
+    // homePage.onclick = function () {
+    //     loadPage('dashboard');
+    //     curPageTitle.textContent = "Current Race";
+    //     homePage.className = "active";
+    //     //newRacePage.classList.remove("active");
+    // }
 
-    newRacePage.onclick = function () {
-        loadPage('new-race');
-    }
+    // newRacePage.onclick = function () {
+    //     curPageTitle.textContent = "Create Race";
+    //     loadPage('new-race');
+    //     newRacePage.className = "active";
+    //     homePage.classList.remove("active");
+    // }
 
 </script>
 

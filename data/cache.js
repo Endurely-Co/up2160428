@@ -28,4 +28,5 @@ function clear(){
     localStorage.clear();
 }
 
-export default { setLogIn, getLogIn, setLogOut, clear };
+export default { setLogIn, getLogIn,
+    setLogOut, getUserType, clear };

@@ -10,8 +10,8 @@
 </head>
 <body id="new-race">
 <h1>New Race</h1>
-<div id="createRaceForm" class="timer-container">
-    <form id="">
+<div class="timer-container">
+    <form id="createRaceForm">
         <label for="name">Event Name:</label>
         <input type="text" id="name" name="name" maxlength="100" required>
         <br><br>
@@ -32,65 +32,66 @@
     </form>
 </div>
 
-<div id="toast" class="toast"></div>
 <script>
 
-    const form = document.getElementById('createRaceForm');
-    const toast = document.getElementById('toast');
+    if (document.readyState !== "loading") {
+        const form = document.getElementById('createRaceForm');
+        const toast = document.getElementById('toast');
 
-    function showToast(message, type){
-        toast.textContent = message;
-        if(type === 'success'){
-            toast.style.backgroundColor = 'green';
-        }else{
-            toast.style.backgroundColor = 'red';
+        function showToast(message, type){
+            toast.textContent = message;
+            if(type === 'success'){
+                toast.style.backgroundColor = 'green';
+            }else{
+                toast.style.backgroundColor = 'red';
+            }
+            toast.className = 'toast show';
+
+            setTimeout((event) => {
+                toast.className = 'toast';
+            }, 3000);
         }
-        toast.className = 'toast show';
 
-        setTimeout((event) => {
-            toast.className = 'toast';
-        }, 3000);
-    }
-
-    function createRace(formData) { //import {CACHE_USER, raceApi} from "../app";
-        fetch('/api/create_user', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-        })
-            .then((race) => race.json())
-            .then((race) => {
-                if(race.error){
-                    showToast(race.error, 'error');
-                }else{
-                    showToast('Race successfully created!', 'success');
-                    // Goto race list
-                    //window.location.href =data.redirectUrl;
-                    form.reset();
-                }
+        function createRace(formData) { //import {CACHE_USER, raceApi} from "../app";
+            fetch('/api/new-race', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
             })
-            .catch((err) => {
-                showToast(err, 'error');
-            });
+                .then((race) => race.json())
+                .then((race) => {
+                    if(race.error){
+                        showToast(race.error, 'error');
+                    }else{
+                        localStorage.setItem('message', 'Race successfully created!');
+                        // Goto race list
+                        window.location.href = '/';
+                        form.reset();
+                    }
+                })
+                .catch((err) => {
+                    showToast(err, 'error');
+                });
+        }
+
+        function getValue(key){
+            return document.getElementById(key).value
+        }
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const formData = {
+                name: getValue('name'),
+                loop_km: getValue('loop_km'),
+                start_time: getValue('start_time'),
+                cutoff_time: getValue('cutoff_time')}
+            createRace(formData);
+        });
     }
 
-    function getValue(key){
-        return document.getElementById(key).value
-    }
 
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-
-        const formData = {
-            email: localStorage.getItem('user_email'),
-            name: getValue('name'),
-            loop_km: getValue('loop_km'),
-            start_time: getValue('start_time'),
-            cutoff_time: getValue('cutoff_time')}
-        createRace(formData);
-    });
 
 </script>
 

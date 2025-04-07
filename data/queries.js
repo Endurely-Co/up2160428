@@ -18,6 +18,11 @@ const insertNewUser = `INSERT INTO users (name, email, isLoggedIn, user_type) VA
 RETURNING id, name, email, isLoggedIn, user_type`;
 
 
+async function requestAllRace(){
+    const races = await database.prepare(allRaces);
+    return races.all();
+}
+
  async function requestLatestRace(){
     const recent = await database.prepare(latestRace);
     return recent.all()[0];
@@ -102,5 +107,6 @@ async function changeUserStatus(email, isLoggedIn = true){
 export default {
     createNewRace, changeUserStatus,
     requestLatestRace, createNewUser,
-    checkLoggedIn, invalidateUser
+    checkLoggedIn, invalidateUser,
+    requestAllRace
 };

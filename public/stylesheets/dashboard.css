@@ -9,9 +9,9 @@
 
 .timer{
     font-family: 'Times New Roman', Times, serif;
-    font-size: 50pt;
+    font-size: 10vw;
     text-align: center;
-    width: 100vw;
+    width: 100%;
     height: fit-content;
 }
 
