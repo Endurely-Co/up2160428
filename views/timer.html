@@ -95,6 +95,7 @@
         lapsesNode.removeChild(lapsesNode.firstChild);
       }
       updateClock(true);
+      localStorage.setItem('timer_status', 'stopped');
     }
 
     function updateClock(reset = false) {
@@ -143,6 +144,7 @@
     };
 
     startBtn.addEventListener('click', () =>{
+      localStorage.setItem('timer_status', 'running');
       console.log('start');
       if([startText, 'Resume'].includes(startBtn.textContent)){
         startTimer();

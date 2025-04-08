@@ -27,7 +27,7 @@
         <!--        <label for="psw"><b>Password</b></label>-->
         <!--        <input type="password" placeholder="Enter Password" name="psw" required>-->
 
-        <button type="submit">Sign In</button>
+        <button type="submit" class="def-button">Sign In</button>
     </div>
 
     <div class="container" style="background-color:#f1f1f1">
@@ -67,8 +67,10 @@
         }).then((res) => res.json())
             .then((data) => {
                 if(data.error){
-                    showToast(data.error.error, "error");
+                    showToast(data.error, "error");
                 }else{
+                    console.log('data.user_type', data.user_type);
+                    localStorage.setItem('user_type', data.user_type);
                     const curPath = window.location.pathname;
                     if(data.redirect_url !== curPath){
                         window.location.href = data.redirect_url;
@@ -115,6 +117,8 @@
                 if(data.error){
                     showToast(data.error, 'error');
                 }else{
+                    console.log('data.user_type', data.user_type);
+                    localStorage.setItem('user_type', data.user_type);
                     window.location.href =data.redirectUrl;
                     form.reset();
                 }

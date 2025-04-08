@@ -38,7 +38,7 @@
                 <label for="runnerChoice">Runner</label>
             </div>
         </fieldset>
-        <button type="submit">Sign Up</button>
+        <button type="submit" class="def-button">Sign Up</button>
     </div>
 
 </form>
@@ -90,7 +90,7 @@
                 }else{
                     // showToast('User added successfully',
                     //     'success '+ data.redirectUrl);
-                    window.location.href =data.redirectUrl;
+                    window.location.href =data.redirect_url;
                     form.reset();
                 }
             })

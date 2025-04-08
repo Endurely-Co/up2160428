@@ -29,4 +29,4 @@ function clear(){
 }
 
 export default { setLogIn, getLogIn,
-    setLogOut, getUserType, clear };
+    setLogOut, getUserType, setUserType, clear };

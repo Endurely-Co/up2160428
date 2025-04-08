@@ -7,7 +7,13 @@
 </head>
 <body>
 <div class="topnav" id="topnav">
-<!--    <a id="new-race-page">Add Race</a>-->
+
+    <div  style="float: right;
+     margin-right: 10px;">
+        <p id="user-type" class="topnav badge">Volunteer</p>
+        <button id="logout">Logout</button>
+    </div>
+
 <!--    <a id='logout'>Sign out</a>-->
 </div>
 <div id="content">
@@ -16,9 +22,13 @@
 <script>
     const topNav = document.getElementById("topnav");
 
+    const userType = document.getElementById("user-type");
+    const logOut = document.getElementById("logout");
     const toast = document.getElementById('toast');
     const content = document.getElementById("content");
     let selectedTabId = undefined;
+    const SELECTED_PAGE_KEY = 'selected_page'
+    const START_TAB = 1
 
     let currentPage = undefined;
 
@@ -37,42 +47,89 @@
     }
 
 
-    document.addEventListener('DOMContentLoaded', function() {
+    function checkLogin(){
+        fetch('/api/check-login', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }).then((res) => res.json())
+            .then((data) => {
+                if(data.error){
+                    showToast(data.error, "error");
+                }
+                const curPath = window.location.pathname;
+                if(data.redirect_url !== curPath){
+                    window.location.href = data.redirect_url;
+                }
+            }).catch((err) => {
+            console.log('User not logged in', 'error');
+        });
+    }
 
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkLogin();
         const message = localStorage.getItem('message');
         if(message){
             showToast(message, 'success');
             localStorage.removeItem('message');
+        }
+
+        const userTypeVal = localStorage.getItem('user_type');
+        if(userTypeVal){
+            const initial = userTypeVal.charAt(0).toUpperCase();
+            userType.textContent = `${initial}${ userTypeVal.substring(1).toLowerCase()}`;
         }
         addMenus();
     });
 
     function initialLoad(){
         let firstLoad = true;
-        for(let i =0; i < topNav.children.length; i++){
+        for(let i =START_TAB; i < topNav.children.length; i++){
             if(topNav.children[i].classList.contains('active')){
                 firstLoad = false;
             }
         }
         if(firstLoad){
+            const cachedSelection = localStorage.getItem(SELECTED_PAGE_KEY);
+            let selectedPage = parseInt(cachedSelection ? cachedSelection : `${START_TAB}`);
             console.log('firstLoad', firstLoad);
-            selectedTabId = topNav.children[0].id;
-            loadPage(topNav.children[0].target);
-            topNav.children[0].className = "active";
+            selectedTabId = topNav.children[selectedPage].id;
+            loadPage(topNav.children[selectedPage].target);
+            topNav.children[selectedPage].className = "active";
         }
+
     }
 
     function addMenuClick(){
 
-        for(let i = 0; i < topNav.children.length; i++){
+        for(let i = START_TAB; i < topNav.children.length; i++){
             topNav.children[i].addEventListener('click', function(event){
                 if(selectedTabId !== topNav.children[i].id){
+
+                    // Prevent user from moving to over page until race is completed
+                    const timerStatus = localStorage.getItem('timer_status');
+
+                    if (timerStatus === 'running'){
+                        showToast("Race has started! You can't navigate from this page until race is completed");
+                        return;
+                    }
+
+
                     console.log('selectedTab', topNav.children[i].target);
                     if(selectedTabId !== undefined){
                         document.getElementById(selectedTabId)
                             .classList.remove('active');
                     }
+
+                    // Remove status as state is not running
+                    if(timerStatus){
+                        localStorage.removeItem('timer_status');
+                    }
+
                     topNav.children[i].className = "active";
+                    localStorage.setItem(SELECTED_PAGE_KEY, `${i}`);
 
                     // Open page based on selected tab
                     loadPage(topNav.children[i].target);
@@ -86,12 +143,12 @@
         fetch('/api/user-type')
         .then(response => response.json())
             .then(menuObj => {
-                while (topNav.hasChildNodes() && topNav.children.length > 1){
+                while (topNav.hasChildNodes() && topNav.children.length > START_TAB){
                     topNav.removeChild(topNav.lastChild);
                 }
 
                 menuObj.menus.forEach(menu => {
-                    let aMenu = document.createElement('a');
+                    let aMenu = document.createElement('button');
                     aMenu.textContent = menu.name;
                     aMenu.id = menu.id
                     aMenu.target = menu.page;
@@ -127,6 +184,17 @@
                 console.warn(error);
         });
 
+    }
+
+    logOut.onclick = () => {
+        fetch('/api/logout')
+            .then(response => response.json())
+            .then(logoutRes =>{
+                window.location.href = '/login';
+                localStorage.clear();
+            }).catch((error) =>{
+                showToast(error, 'error');
+        });
     }
 
     // document.addEventListener("DOMContentLoaded", () => {

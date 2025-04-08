@@ -12,7 +12,7 @@ const updateUserLogin = `UPDATE users SET isLoggedIn = ? WHERE email = ?`;
 
 const queryForUser = `SELECT * FROM users WHERE email = ?`;
 
-const queryCheckedLogIn = `SELECT isLoggedIn FROM users WHERE email = ?`;
+const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM users WHERE email = ?`;
 
 const insertNewUser = `INSERT INTO users (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type`;
@@ -46,14 +46,14 @@ async function checkLoggedIn() {
 
     if (email === null) {
         return {
-            error: {
-               error: "User is not signed in!"
-            }
+            error: "User is not signed in!",
+            redirect_url: '/login'
         }
     }
-    const hasLoggedIn = await database.prepare(queryCheckedLogIn).get(email);
+    const {user_type, hasLoggedIn} = await database.prepare(queryCheckedLogIn).get(email);
     return {
         user_logged_in: hasLoggedIn,
+        user_type: user_type,
         redirect_url: '/'
     };
 }
@@ -95,8 +95,8 @@ async function changeUserStatus(email, isLoggedIn = true){
             id: user.id,
             name: user.name,
             email: user.email,
-            userType: user.userType,
-            isLoggedIn: user.isLoggedIn,
+            user_type: user.user_type,
+            isLoggedIn: user.isLoggedIn, //todo: to be changed to snake case
         }
     }
     return {
