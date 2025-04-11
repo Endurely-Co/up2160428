@@ -10,8 +10,9 @@
 <body id="createSignInForm">
 
 <div id="timerContainer" class="timer-container">
+  <p class="race-title">Race Time</p>
   <p class="timer" id="timer">00:00:00.000</p>
-  <div class="controls">
+  <div class="controls" id="controls">
     <button id="startPause" type="button" class="ctr-button start">Start</button>
     <button id="lapse" type="button" class="ctr-button lap">Lapse</button>
     <button id="stop" type="button" class="ctr-button stop">Stop</button>
@@ -35,8 +36,8 @@
     const lapseBtn = document.getElementById('lapse');
     const timer = document.getElementById('timer');
     const lapsesNode = document.getElementById('lapses');
-    const lapsesContainer = document.getElementById('lapses-container');
     const topNav = document.getElementById('topnav');
+    const controls = document.getElementById('controls');
     // const lapseTemplate = document.getElementById("template");
 
     // let lapses = [];
@@ -72,7 +73,11 @@
       }
     }
 
-
+    const userTypeVal = localStorage.getItem('user_type');
+    if(userTypeVal !== 'organiser'){
+      console.log('not organiser', 'error');
+      controls.className = 'controls hide';
+    }
 
     function startTimer() {
       if(!isRunning && !intervalId){
@@ -155,34 +160,6 @@
 
     stopBtn.addEventListener('click', stopTimer);
 
-
-    // `00:00:00.000`
-
-    function checkLogin(){
-      fetch('/api/check-login', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).then((res) => res.json())
-              .then((data) => {
-                if(data.error){
-                  showToast("", "error");
-                }else{
-                  const curPath = window.location.pathname;
-                  if(data.redirect_url !== curPath){
-                    window.location.href = data.redirect_url;
-                  }
-                }
-              }).catch((err) => {
-        console.log('User not logged in', 'error');
-      });
-    }
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-      checkLogin();
-    });
 
     function showToast(message, type){
       toast.textContent = message;

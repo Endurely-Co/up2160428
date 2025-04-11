@@ -8,15 +8,29 @@ const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const allRaces = `SELECT * FROM race ORDER BY start_time`;
 
-const updateUserLogin = `UPDATE users SET isLoggedIn = ? WHERE email = ?`;
+const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
-const queryForUser = `SELECT * FROM users WHERE email = ?`;
+const queryForUser = `SELECT * FROM user WHERE email = ?`;
 
-const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM users WHERE email = ?`;
+const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
 
-const insertNewUser = `INSERT INTO users (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
+const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type`;
 
+const insertRacerPosition = `INSERT INTO racer(latitude, longitude, race_position, racer_id) VALUES (?, ?, ?, ?);`;
+
+const selectRacerPosition = `SELECT * FROM racer ORDER BY latitude DESC, longitude ASC`;
+
+
+async function updateRacerPosition(latitude, longitude, race_position, user_id) {
+    const racer = await database.prepare(insertRacerPosition);
+    racer.get(latitude, longitude, race_position, user_id);
+}
+
+async function requestRacerPosition(){
+    const racer =await database.prepare(selectRacerPosition);
+    return racer.all();
+}
 
 async function requestAllRace(){
     const races = await database.prepare(allRaces);
@@ -25,7 +39,7 @@ async function requestAllRace(){
 
  async function requestLatestRace(){
     const recent = await database.prepare(latestRace);
-    return recent.all()[0];
+    return recent.all().length === 0 ? [] : recent.all()[0];
 }
 
 async function createNewRace(email, name, cutoff_time, start_time,  loop_km){
@@ -108,5 +122,6 @@ export default {
     createNewRace, changeUserStatus,
     requestLatestRace, createNewUser,
     checkLoggedIn, invalidateUser,
-    requestAllRace
+    requestAllRace, requestRacerPosition,
+    updateRacerPosition
 };

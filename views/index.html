@@ -55,15 +55,12 @@
             },
         }).then((res) => res.json())
             .then((data) => {
-                if(data.error){
-                    showToast(data.error, "error");
-                }
                 const curPath = window.location.pathname;
                 if(data.redirect_url !== curPath){
                     window.location.href = data.redirect_url;
                 }
             }).catch((err) => {
-            console.log('User not logged in', 'error');
+            console.log(err, 'error');
         });
     }
 

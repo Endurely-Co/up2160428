@@ -52,13 +52,19 @@
                     if(data.error){
                         showToast("An error occur", "error");
                     }else{
+                        if(data.length === 0){
+                            const noRace = document.createElement('p');
+                            noRace.textContent = "No race found.";
+                            raceInfo.appendChild(noRace)
+                            return;
+                        }
                         newParagraph('Name', data.name);
                         newParagraph('Loop (km)', `${data.loop_km} km`);
                         newParagraph('Start Time', data.start_time);
                         newParagraph('Cutoff Time', data.cutoff_time);
                     }
                 }).catch((err) => {
-                console.log('User not logged in', 'error');
+                console.log('User not logged inqq', 'error');
             });
         }
         populateCurrentRace();

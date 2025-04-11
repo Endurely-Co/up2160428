@@ -2,11 +2,11 @@ import express from 'express';
 const router = express.Router();
 import db from '../data/queries.js';
 import cache from "../data/cache.js";
+import geolocation from "./geolocation.js";
 
 router.get('/current-race', async (req, res) => {
     try{
         const newRace = await db.requestLatestRace();
-
         return res.status(200).json(newRace);
     }catch (err){
         return res.status(500).send({
@@ -18,18 +18,23 @@ router.get('/current-race', async (req, res) => {
 router.get('/user-type', async (req, res) => {
     const userType = cache.getUserType();
     const response = {'menus': []};
+    const timer = {id: 'stop-watch', name: 'Stop watch', page: 'timer'};
+    let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'}
     if(userType === 'runner'){
-        response['menus'].push({id: 'my-race', name: 'My race', page: 'dashboard'});
+        response['menus'].push(raceData);
+        response['menus'].push(timer);
     }else if(userType === 'volunteer'){
+        raceData['id'] = 'cur-race';
+        raceData['name'] = 'Current Race';
         const menus = [
-            {id: 'stop-watch', name: 'Stop watch', page: 'timer'},
-            {id: 'cur-race', name: 'Current Race', page: 'dashboard'}]
+            timer,raceData]
         menus.forEach((menu) => {
             response['menus'].push(menu)
         });
     }else{
-        [{id: 'stop-watch', name: 'Stop watch', page: 'timer'},
-            {id: 'current-race', name: 'Current Race', page: 'dashboard'},
+        raceData['id'] = 'cur-race';
+        raceData['name'] = 'Current Race';
+        [timer,raceData,
             {id: 'new-race', name: 'New Race', page: 'new-race'}]
             .forEach((menu) => {
             response['menus'].push(menu)
@@ -66,6 +71,20 @@ async function newRace(req, res){
         res.status(500).send({error: error.message});
     }
 }
+
+router.post('/racer', async (req, res) => {
+    if(cache.getUserType() === 'runner'){
+        const {latitude, longitude, race_position, racer_id} = req.body;
+        const registerLocation = db.updateRacerPosition(latitude, longitude, race_position, racer_id);
+        return res.status(200).json(registerLocation)
+    }
+    return res.status(200).json({message: "User is not a runner"});
+});
+
+router.get('/racer', async (req, res) => {
+    const registerLocation = db.requestRacerPosition();
+    return res.status(200).json(registerLocation);
+});
 
 export default router;
 
