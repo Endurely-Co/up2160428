@@ -82,7 +82,7 @@ router.post('/racer', async (req, res) => {
             race_position, racer_id);
         return res.status(200).json(racerPosition)
     }
-    return res.status(400).json({message: "User is not a runner"});
+    return res.status(400).json({message: `User is not a runner ${cache.getUserType()}`});
 });
 
 router.get('/racer', async (req, res) => {
