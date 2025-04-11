@@ -12,6 +12,8 @@ const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
 const queryForUser = `SELECT * FROM user WHERE email = ?`;
 
+const queryForAllUsers = `SELECT * FROM user`;
+
 const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
@@ -31,6 +33,11 @@ async function updateRacerPosition(latitude, longitude, race_position, user_id) 
         race_position: race_position,
         user_id: user_id,
     }
+}
+
+async function getAllUsers(){
+    const users =await database.prepare(queryForAllUsers);
+    return users.all();
 }
 
 async function requestRacerPosition(){
@@ -129,5 +136,5 @@ export default {
     requestLatestRace, createNewUser,
     checkLoggedIn, invalidateUser,
     requestAllRace, requestRacerPosition,
-    updateRacerPosition
+    updateRacerPosition, getAllUsers
 };

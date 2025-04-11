@@ -7,6 +7,10 @@ import cache from "../data/cache.js";
 //     res.send('Logged in!');
 // });
 
+router.get('/users', async (req, res) => {
+    return res.status(200).json(await db.getAllUsers())
+});
+
 router.post('/login', async (req, res) => {
     try{
         let { email, name} = req.body; // remove name from login
