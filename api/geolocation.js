@@ -1,3 +1,5 @@
+import queries from "../data/queries.js";
+
 let id;
 
 let response = {};

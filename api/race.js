@@ -3,6 +3,7 @@ const router = express.Router();
 import db from '../data/queries.js';
 import cache from "../data/cache.js";
 import geolocation from "./geolocation.js";
+import queries from "../data/queries.js";
 
 router.get('/current-race', async (req, res) => {
     try{
@@ -74,11 +75,14 @@ async function newRace(req, res){
 
 router.post('/racer', async (req, res) => {
     if(cache.getUserType() === 'runner'){
-        const {latitude, longitude, race_position, racer_id} = req.body;
-        const registerLocation = db.updateRacerPosition(latitude, longitude, race_position, racer_id);
-        return res.status(200).json(registerLocation)
+        const {race_position, racer_id} = req.body;
+        const location = queries.registerLocation();
+        const racerPosition = db.updateRacerPosition(
+            location.latitude, location.longitude,
+            race_position, racer_id);
+        return res.status(200).json(racerPosition)
     }
-    return res.status(200).json({message: "User is not a runner"});
+    return res.status(400).json({message: "User is not a runner"});
 });
 
 router.get('/racer', async (req, res) => {

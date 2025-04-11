@@ -25,6 +25,12 @@ const selectRacerPosition = `SELECT * FROM racer ORDER BY latitude DESC, longitu
 async function updateRacerPosition(latitude, longitude, race_position, user_id) {
     const racer = await database.prepare(insertRacerPosition);
     racer.get(latitude, longitude, race_position, user_id);
+    return {
+        latitude: latitude,
+        longitude: longitude,
+        race_position: race_position,
+        user_id: user_id,
+    }
 }
 
 async function requestRacerPosition(){
