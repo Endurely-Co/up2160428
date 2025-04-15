@@ -5,18 +5,10 @@ const userEmail = 'user_email';
 const userType = 'user_type';
 
 function setLogIn(email){
-    // const userEmail = getLogIn();
-    // if(userEmail !== email){
-    //     localStorage.removeItem(userEmail);
-    // }
     localStorage.setItem(userEmail, email);
 }
 
 function setUserType(type){
-    // const userType = getUserType(type);
-    // if(userType !== type){
-    //     localStorage.removeItem(userType);
-    // }
     localStorage.setItem(userType, type);
 }
 
