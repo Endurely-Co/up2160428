@@ -1,5 +1,6 @@
 import database from "./model.js";
 import cache from "./cache.js";
+import {json} from "express";
 
 
 const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email) VALUES(?, ?, ?, ?, ?)`;
@@ -12,6 +13,8 @@ const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
 const queryForUser = `SELECT * FROM user WHERE email = ?`;
 
+const queryForUserIdByEmail = `SELECT id FROM user WHERE email = ?`;
+
 const queryForAllUsers = `SELECT * FROM user`;
 
 const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
@@ -19,19 +22,19 @@ const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type`;
 
-const insertRacerPosition = `INSERT INTO racer(latitude, longitude, race_position, racer_id) VALUES (?, ?, ?, ?);`;
+const insertRacerPosition = `INSERT OR IGNORE INTO racer(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
 
 const selectRacerPosition = `SELECT * FROM racer ORDER BY latitude DESC, longitude ASC`;
 
 
-async function updateRacerPosition(latitude, longitude, race_position, user_id) {
+async function updateRacerPosition(latitude, longitude, racer_id) {
     const racer = await database.prepare(insertRacerPosition);
-    racer.get(latitude, longitude, race_position, user_id);
+
+    racer.get(latitude, longitude, racer_id);
     return {
         latitude: latitude,
         longitude: longitude,
-        race_position: race_position,
-        user_id: user_id,
+        user: racer_id,
     }
 }
 
@@ -110,6 +113,25 @@ async function invalidateUser() {
     };
 }
 
+
+async function getUserById(){
+    const query = database.prepare(queryForUserIdByEmail);
+    const user = query.get(cache.getLogIn())
+    return user.id;
+}
+
+async function getUserByEmail(){
+    const query = database.prepare(queryForUser);
+    const user = query.get(cache.getLogIn())
+    return {
+        name: user.name,
+        email: user.email,
+        user_type: user.user_type,
+        id: user.id,
+        isLoggedIn: user.isLoggedIn,
+    };
+}
+
 async function changeUserStatus(email, isLoggedIn = true){
     const query = database.prepare(queryForUser);
     const user = isLoggedIn ? query.get(email) : undefined;
@@ -136,5 +158,6 @@ export default {
     requestLatestRace, createNewUser,
     checkLoggedIn, invalidateUser,
     requestAllRace, requestRacerPosition,
-    updateRacerPosition, getAllUsers
+    updateRacerPosition, getAllUsers,
+    getUserByEmail, getUserById
 };

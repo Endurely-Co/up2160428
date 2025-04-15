@@ -1,8 +1,7 @@
-import express from 'express';
+import express, {json} from 'express';
 const router = express.Router();
 import db from '../data/queries.js';
 import cache from "../data/cache.js";
-import geolocation from "./geolocation.js";
 import queries from "../data/queries.js";
 
 router.get('/current-race', async (req, res) => {
@@ -43,7 +42,11 @@ router.get('/user-type', async (req, res) => {
     }
     return res.status(200).json(response);
 });
-
+// requestRacerPosition
+router.get('/racers', async (req, res) => {
+    const racers = await db.requestRacerPosition();
+    return res.status(200).json(racers);
+});
 
 router.get('/races', async (req, res) => {
     const races = await db.requestAllRace();
@@ -75,20 +78,19 @@ async function newRace(req, res){
 
 router.post('/racer', async (req, res) => {
     if(cache.getUserType() === 'runner'){
-        const {race_position, racer_id} = req.body;
-        const location = queries.registerLocation();
-        const racerPosition = db.updateRacerPosition(
-            location.latitude, location.longitude,
-            race_position, racer_id);
-        return res.status(200).json(racerPosition)
+        const {latitude, longitude} = req.body;
+        const racer_id = await queries.getUserById();
+        const racerPosition = await db.updateRacerPosition(latitude, longitude,
+            racer_id);
+        return res.status(200).json(racerPosition);
     }
-    return res.status(400).json({message: `User is not a runner ${cache.getUserType()}`});
+    return res.status(400).json({message: "User is not a runner"});
 });
 
-router.get('/racer', async (req, res) => {
-    const registerLocation = db.requestRacerPosition();
-    return res.status(200).json(registerLocation);
-});
+// router.get('/racer', async (req, res) => {
+//     const registerLocation = db.requestRacerPosition();
+//     return res.status(200).json(registerLocation);
+// });
 
 export default router;
 

@@ -50,6 +50,9 @@
         }, 3000);
     }
 
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js');
+    }
 
     function checkLogin(){
         fetch('/api/check-login', {

@@ -88,6 +88,51 @@
       }
     }
 
+    function error(error){
+      showToast("Error talking to your gps: " + error.message);
+    }
+
+    function success(position){
+      formData['longitude'] = position.coords.longitude;
+      formData["latitude"] = position.coords.latitude;
+
+      fetch('/api/racer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      }).then(function(response) {
+        return response.json();
+      }).then(function(races) {
+        console.log(races);
+      }).catch(function(error) {
+        console.log(error);
+      });
+    }
+
+    const formData = {};
+
+    monitorUserPosition();
+
+
+    async function monitorUserPosition() {
+
+      const options = {
+        enableHighAccuracy: false,
+        timeout: 60000,
+        maximumAge: 0
+      }
+
+      navigator.geolocation.watchPosition(success, error, options);
+      //await new Promise(resolve => setTimeout(resolve, 500));
+     // navigator.geolocation.clearWatch(id);
+    }
+
+    function updateLocation() {
+      navigator.geolocation.getCurrentPosition(success, error)
+    }
+
     function stopTimer() {
       startBtn.textContent = startText
       clearInterval(intervalId);
