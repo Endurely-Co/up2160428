@@ -6,6 +6,9 @@
     <link rel='stylesheet' href='/stylesheets/toast.css' />
     <link rel='stylesheet' href='/stylesheets/login.css' />
     <link rel='stylesheet' href='/stylesheets/button.css' />
+    <link rel='stylesheet' href='/stylesheets/dashboard.css' />
+    <link rel="stylesheet" href="/stylesheets/race.css">
+
     <title id="page-title">Current Race</title>
 
     <link rel="manifest" href="/manifest.json">
@@ -13,31 +16,52 @@
 
 </head>
 <body>
-<div class="topnav" id="topnav">
 
+<div class="topnav web-nav" id="topnav">
     <div  style="float: right;
      margin-right: 10px;">
-        <p id="user-type" class="topnav badge">Volunteer</p>
+        <p id="user-type" class="topnav badge"></p>
         <button id="logout">Logout</button>
     </div>
-
-<!--    <a id='logout'>Sign out</a>-->
 </div>
+<div class="topnav mobile-nav" id="topnav-mob">
+    <a href="/" class="active">UP2160428</a>
+    <div id="my-links"></div>
+    <a href="javascript:void(0);" onclick="doLogOut()" id="mob-logout">Logout</a>
+    <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+        <i class="fa fa-bars"></i>
+    </a>
+</div>
+
 <div id="content">
 </div>
 <div id="toast" class="toast"></div>
 <script>
-    const topNav = document.getElementById("topnav");
-
+    const isMobile = document.getElementById("topnav-mob").checkVisibility()
+    let topNav = isMobile ? document.getElementById("my-links")
+        : document.getElementById("topnav");
+    const mobLogout = document.getElementById("mob-logout");
     const userType = document.getElementById("user-type");
     const logOut = document.getElementById("logout");
     const toast = document.getElementById('toast');
     const content = document.getElementById("content");
+    const myLinks = document.getElementById("my-links");
+
     let selectedTabId = undefined;
     const SELECTED_PAGE_KEY = 'selected_page'
-    const START_TAB = 1
+    let START_TAB = isMobile ? 0 : 1
 
     let currentPage = undefined;
+
+    function myFunction() {
+        if (myLinks.style.display === "block") {
+            myLinks.style.display = "none";
+            mobLogout.style.display = 'none';
+        } else {
+            mobLogout.style.display = 'block';
+            myLinks.style.display = "block";
+        }
+    }
 
     function showToast(message, type){
         toast.textContent = message;
@@ -88,6 +112,7 @@
             const initial = userTypeVal.charAt(0).toUpperCase();
             userType.textContent = `${initial}${ userTypeVal.substring(1).toLowerCase()}`;
         }
+
         addMenus();
     });
 
@@ -106,7 +131,10 @@
             loadPage(topNav.children[selectedPage].target);
             topNav.children[selectedPage].className = "active";
         }
-
+        if(isMobile){
+            mobLogout.style.display = 'none';
+            myLinks.style.display = "none";
+        }
     }
 
     function addMenuClick(){
@@ -155,11 +183,11 @@
                 }
 
                 menuObj.menus.forEach(menu => {
-                    let aMenu = document.createElement('button');
-                    aMenu.textContent = menu.name;
-                    aMenu.id = menu.id
-                    aMenu.target = menu.page;
-                    topNav.appendChild(aMenu);
+                    let btnMenu = document.createElement(isMobile ? 'a': 'button');
+                    btnMenu.textContent = menu.name;
+                    btnMenu.id = menu.id
+                    btnMenu.target = menu.page;
+                    topNav.appendChild(btnMenu);
                 });
 
                 addMenuClick();
@@ -167,6 +195,27 @@
             });
     }
 
+
+    // function addMobileMenus(){
+    //     fetch('/api/user-type')
+    //         .then(response => response.json())
+    //         .then(menuObj => {
+    //             while (topNav.hasChildNodes() && topNav.children.length > START_TAB){
+    //                 topNav.removeChild(topNav.lastChild);
+    //             }
+    //
+    //             menuObj.menus.forEach(menu => {
+    //                 let aMenu = document.createElement('a');
+    //                 aMenu.textContent = menu.name;
+    //                 aMenu.id = menu.id
+    //                 aMenu.target = menu.page;
+    //                 topNav.appendChild(aMenu);
+    //             });
+    //
+    //             addMenuClick();
+    //             initialLoad();
+    //         });
+    // }
 
     function removeNode(content){
         while (content.hasChildNodes()){
@@ -193,34 +242,20 @@
 
     }
 
-    logOut.onclick = () => {
+    function doLogOut(){
         fetch('/api/logout')
             .then(response => response.json())
             .then(logoutRes =>{
                 window.location.href = '/login';
                 localStorage.clear();
             }).catch((error) =>{
-                showToast(error, 'error');
+            showToast(error, 'error');
         });
     }
 
-    // document.addEventListener("DOMContentLoaded", () => {
-    //     loadPage('dashboard');
-    // });
-
-    // homePage.onclick = function () {
-    //     loadPage('dashboard');
-    //     curPageTitle.textContent = "Current Race";
-    //     homePage.className = "active";
-    //     //newRacePage.classList.remove("active");
-    // }
-
-    // newRacePage.onclick = function () {
-    //     curPageTitle.textContent = "Create Race";
-    //     loadPage('new-race');
-    //     newRacePage.className = "active";
-    //     homePage.classList.remove("active");
-    // }
+    logOut.onclick = () => {
+        doLogOut();
+    }
 
 </script>
 
