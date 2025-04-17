@@ -115,15 +115,16 @@
 
     async function monitorUserPosition() {
 
-      const options = {
-        enableHighAccuracy: false,
-        timeout: 60000,
-        maximumAge: 0
-      }
+      if (localStorage.getItem('user_type') === 'runner') {
 
-      navigator.geolocation.watchPosition(success, error, options);
-      //await new Promise(resolve => setTimeout(resolve, 500));
-     // navigator.geolocation.clearWatch(id);
+        const options = {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 0
+        }
+
+        navigator.geolocation.watchPosition(success, error, options);
+      }
     }
 
     function updateLocation() {

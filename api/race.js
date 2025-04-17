@@ -87,10 +87,11 @@ router.post('/racer', async (req, res) => {
     return res.status(400).json({message: "User is not a runner"});
 });
 
-// router.get('/racer', async (req, res) => {
-//     const registerLocation = db.requestRacerPosition();
-//     return res.status(200).json(registerLocation);
-// });
+router.get('/runner-positions', async (req, res) => {
+    const racerPosition = await db.requestRacerPosition();
+
+    return res.status(200).json(racerPosition);
+});
 
 export default router;
 

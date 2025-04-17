@@ -36,6 +36,12 @@ const initDatabase = `
         FOREIGN KEY(racer_id) REFERENCES user(id)
         );
 
+    CREATE TABLE IF NOT EXISTS race_result(
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+        runner_position INTEGER NOT NULL,
+        racer_id INTEGER PRIMARY KEY,
+        FOREIGN KEY(racer_id) REFERENCES user(id)
+    );
 `
 
 database.exec(initDatabase);

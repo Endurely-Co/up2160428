@@ -1,6 +1,5 @@
 import database from "./model.js";
 import cache from "./cache.js";
-import {json} from "express";
 
 
 const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email) VALUES(?, ?, ?, ?, ?)`;
@@ -22,14 +21,26 @@ const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type`;
 
-const insertRacerPosition = `INSERT OR IGNORE INTO racer(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
+const insertRacerPosition = `INSERT OR REPLACE INTO racer(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
 
-const selectRacerPosition = `SELECT * FROM racer ORDER BY latitude DESC, longitude ASC`;
+const selectRacer = `SELECT * FROM racer ORDER BY latitude DESC, longitude ASC`;
 
+const insertRaceResult = `INSERT OR REPLACE INTO race_result(runner_position, racer_id) VALUES (?, ?);`
+
+const queryRaceResults = `SELECT * FROM race_result ORDER BY runner_position ASC;`
+
+async function setRaceResult(){
+    const racerLocation = await requestRacerPosition();
+    for(let racer in racerLocation){
+        const raceResult = await database.prepare(insertRaceResult);
+        raceResult.get(2, racer.racer_id);
+    }
+
+    return (await database.prepare(queryRaceResults));
+}
 
 async function updateRacerPosition(latitude, longitude, racer_id) {
     const racer = await database.prepare(insertRacerPosition);
-
     racer.get(latitude, longitude, racer_id);
     return {
         latitude: latitude,
@@ -44,7 +55,7 @@ async function getAllUsers(){
 }
 
 async function requestRacerPosition(){
-    const racer =await database.prepare(selectRacerPosition);
+    const racer =await database.prepare(selectRacer);
     return racer.all();
 }
 
