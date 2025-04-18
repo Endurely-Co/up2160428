@@ -18,8 +18,10 @@ const queryForAllUsers = `SELECT * FROM user`;
 
 const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
 
-const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type) VALUES (?, ?, ?, ?)
-RETURNING id, name, email, isLoggedIn, user_type`;
+const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
+RETURNING id, name, email, isLoggedIn, user_type, racer_id`;
+
+const queryRaceNum = `SELECT race_id FROM user ORDER BY race_id DESC LIMIT 1;`;
 
 const insertRacerPosition = `INSERT OR REPLACE INTO racer(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
 
@@ -69,6 +71,24 @@ async function requestAllRace(){
     return recent.all().length === 0 ? [] : recent.all()[0];
 }
 
+// Normally, this thread would be lock to prevent interference
+// That's yet to be covered in this course hence this
+function getRaceId(racerIds){
+    const charLimit = 4
+    if(racerIds.length === 0){
+        return '0001';
+    }
+    const raceIdInt = parseInt(racerIds[0]) + 1;
+    const zeroCount =
+        charLimit - raceIdInt.toString().length; // v = 2, 0002
+    let raceId = ''
+    for (let i = 0; i < zeroCount; i++) {
+        raceId += '0';
+    }
+
+    return raceId + raceIdInt;
+}
+
 async function createNewRace(email, name, cutoff_time, start_time,  loop_km){
     const race = await database.prepare(newRace);
     race.get(name, loop_km, start_time, cutoff_time,  email);
@@ -102,11 +122,16 @@ async function checkLoggedIn() {
 async function createNewUser(email, name, userType){
     try{
         const insert = await database.prepare(insertNewUser);
-        const newUser = insert.get(name, email, 'true', userType);
+        const queryLastRaceNumber = await database.prepare(queryRaceNum);
+        const lastRaceNumber = userType === 'runner' ?
+            getRaceId(queryLastRaceNumber.all()) : null;
+
+        const newUser = insert.get(name, email, 'true', userType, lastRaceNumber);
         return {
             id: newUser.id,
             name: newUser.name,
             email: newUser.email,
+            racer_id: lastRaceNumber
         };
     }catch(err){
         return {
@@ -157,6 +182,7 @@ async function changeUserStatus(email, isLoggedIn = true){
             email: user.email,
             user_type: user.user_type,
             isLoggedIn: user.isLoggedIn, //todo: to be changed to snake case
+            racer_id: user.racer_id,
         }
     }
     return {

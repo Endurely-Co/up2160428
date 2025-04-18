@@ -14,8 +14,8 @@ const initDatabase = `
         name       VARCHAR(50)                           NOT NULL,
         isLoggedIn BOOLEAN                               NOT NULL,
         user_type  TEXT CHECK (user_type IN ('runner', 'volunteer', 'organiser')) NOT NULL,
-        race_id CHAR(5) NOT NULL
-    );
+        race_id CHAR(4) CHECK (length(race_id) <= 4) NULL
+        );
 
     CREATE TABLE IF NOT EXISTS race
     (
