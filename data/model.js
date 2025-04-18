@@ -13,19 +13,21 @@ const initDatabase = `
         email      VARCHAR(50) UNIQUE                    NOT NULL,
         name       VARCHAR(50)                           NOT NULL,
         isLoggedIn BOOLEAN                               NOT NULL,
-        user_type  TEXT CHECK (user_type IN ('runner', 'volunteer', 'organiser')) NOT NULL
+        user_type  TEXT CHECK (user_type IN ('runner', 'volunteer', 'organiser')) NOT NULL,
+        race_id CHAR(5) NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS race
     (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        name        VARCHAR(100)  NOT NULL,
-        loop_km     DECIMAL(5, 2) NOT NULL,
-        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-        start_time  DATETIME DEFAULT CURRENT_TIMESTAMP,
-        cutoff_time INTEGER       NOT NULL, -- Store cutoff time in minutes (or seconds, as per your requirement)
-        email     VARCHAR(50) NOT NULL
-    );
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        name         VARCHAR(100)  NOT NULL,
+        loop_km      DECIMAL(5, 2) NOT NULL,
+        created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        start_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        cutoff_time  INTEGER NOT NULL,
+        email        VARCHAR(50) NOT NULL,
+        race_ended   BOOLEAN DEFAULT 0
+        );
 
     CREATE TABLE IF NOT EXISTS racer(
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
