@@ -19,7 +19,7 @@ const queryForAllUsers = `SELECT * FROM user`;
 const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
-RETURNING id, name, email, isLoggedIn, user_type, racer_id`;
+RETURNING id, name, email, isLoggedIn, user_type, race_id`;
 
 const queryRaceNum = `SELECT race_id FROM user ORDER BY race_id DESC LIMIT 1;`;
 
