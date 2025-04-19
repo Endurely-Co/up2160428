@@ -10,6 +10,8 @@
     <div>
         <h2>Race Information</h2>
         <div id="race-info"></div>
+        <button id="register-race"
+                class="def-button" disabled>Register Race</button>
     </div>
 </div>
 <script>
@@ -21,6 +23,17 @@
     } else {
         console.log("DOM already loaded — run now");
         let raceInfo = document.getElementById('race-info');
+        const registerButton = document.getElementById('register-race');
+        checkRaceRegistration();
+
+        if (localStorage.getItem('user_type') === 'runner'){
+            registerButton.style.display = 'block';
+            registerButton.onclick = () =>{
+                registerRace();
+            }
+        }else{
+            registerButton.style.display = 'none';
+        }
 
         function newParagraph(title, subTitle){
             let paragraph = document.createElement('p');
@@ -31,6 +44,44 @@
             paragraph.appendChild(strong);
             paragraph.appendChild(document.createTextNode(subTitle));
             raceInfo.appendChild(paragraph);
+        }
+
+
+        function checkRaceRegistration(){
+            // registered-race
+            fetch('/api/registered-race', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then((res) => res.json())
+                .then((data) => {
+                    console.log('race registration done: '+ data.registered);
+                    registerButton.disabled = data.registered;
+                }).catch((err) => {
+                showToast(err.message, 'error');
+            });
+        }
+
+
+        function registerRace(){
+            fetch('/api/register-race', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }).then((res) => res.json())
+                .then((data) => {
+                    if(data.error){
+                        showToast(data.error, 'error');
+                    }else{
+                        showToast(data.message, 'success');
+                        registerButton.textContent = 'Registered';
+                        registerButton.disabled = true;
+                    }
+                }).catch((err) => {
+                showToast(err.message, 'error');
+            });
         }
 
         function populateCurrentRace(){
@@ -44,16 +95,18 @@
                     if(data.error){
                         showToast("An error occur", "error");
                     }else{
-                        if(data.length === 0){
+                        console.log(data.data, 'data_data');
+                        if(data.data.length === 0){
                             const noRace = document.createElement('p');
                             noRace.textContent = "No race found.";
                             raceInfo.appendChild(noRace)
                             return;
                         }
-                        newParagraph('Name', data.name);
-                        newParagraph('Loop (km)', `${data.loop_km} km`);
-                        newParagraph('Start Time', data.start_time);
-                        newParagraph('Cutoff Time', data.cutoff_time);
+                        const race = data.data[0];
+                        newParagraph('Name', race.name);
+                        newParagraph('Loop (km)', `${race.loop_km} km`);
+                        newParagraph('Start Time', race.start_time);
+                        newParagraph('Cutoff Time', race.cutoff_time);
                     }
                 }).catch((err) => {
                 console.log('User not logged inqq', 'error');

@@ -10,6 +10,13 @@ const allRaces = `SELECT * FROM race ORDER BY start_time`;
 
 const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
+const registerUser = `INSERT INTO registered_race(user_id, race_id) VALUES(?, ?)`;
+
+const queryRegisteredRaces = `SELECT * FROM registered_race`
+
+const queryRegisteredRaceById = `SELECT * FROM registered_race WHERE user_id = ?`
+// const updateUserRace = `UPDATE race SET racer_id = ? WHERE id = ?`;
+
 const queryForUser = `SELECT * FROM user WHERE email = ?`;
 
 const queryForUserIdByEmail = `SELECT id FROM user WHERE email = ?`;
@@ -21,11 +28,11 @@ const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type, race_id`;
 
-const queryRaceNum = `SELECT race_id FROM user ORDER BY race_id DESC LIMIT 1;`;
+const queryRaceNum = `SELECT race_id FROM user WHERE race_id IS NOT NULL ORDER BY race_id DESC LIMIT 1`;
 
-const insertRacerPosition = `INSERT OR REPLACE INTO racer(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
+const insertRacerPosition = `INSERT OR REPLACE INTO racer_position(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
 
-const selectRacer = `SELECT * FROM racer ORDER BY latitude DESC, longitude ASC`;
+const selectRacer = `SELECT * FROM racer_position ORDER BY latitude DESC, longitude ASC`;
 
 const insertRaceResult = `INSERT OR REPLACE INTO race_result(runner_position, racer_id) VALUES (?, ?);`
 
@@ -39,6 +46,19 @@ async function setRaceResult(){
     }
 
     return (await database.prepare(queryRaceResults));
+}
+
+async function getRegisteredRaces(){
+    const registeredRaces = database.prepare(queryRegisteredRaces);
+    const rRace =registeredRaces.all();
+    return rRace;
+}
+
+async function getRegisteredRaceById(){
+    const registeredRaces = database.prepare(queryRegisteredRaceById);
+    const curUId = await getUserById();
+    //const registeredRace = registeredRaces.get(curUId);
+    return registeredRaces.get(curUId);
 }
 
 async function updateRacerPosition(latitude, longitude, racer_id) {
@@ -68,7 +88,7 @@ async function requestAllRace(){
 
  async function requestLatestRace(){
     const recent = await database.prepare(latestRace);
-    return recent.all().length === 0 ? [] : recent.all()[0];
+    return recent.all().length === 0 ? [] : [recent.all()[0]];
 }
 
 // Normally, this thread would be lock to prevent interference
@@ -78,7 +98,7 @@ function getRaceId(racerIds){
     if(racerIds.length === 0){
         return '0001';
     }
-    const raceIdInt = parseInt(racerIds[0]) + 1;
+    const raceIdInt = parseInt(racerIds[0].race_id) + 1;
     const zeroCount =
         charLimit - raceIdInt.toString().length; // v = 2, 0002
     let raceId = ''
@@ -86,7 +106,18 @@ function getRaceId(racerIds){
         raceId += '0';
     }
 
-    return raceId + raceIdInt;
+    return `${raceId}${raceIdInt}`;
+}
+
+async function registerRace(email){
+    const race = await requestLatestRace();
+    const queryUser = database.prepare(queryForUserIdByEmail)
+    const user = queryUser.get(email);
+    const registerRace = database.prepare(registerUser);
+    registerRace.get(user.id, race[0].id); //race_id
+    return {
+        message: 'Race was registered'
+    }
 }
 
 async function createNewRace(email, name, cutoff_time, start_time,  loop_km){
@@ -126,7 +157,7 @@ async function createNewUser(email, name, userType){
         const lastRaceNumber = userType === 'runner' ?
             getRaceId(queryLastRaceNumber.all()) : null;
 
-        const newUser = insert.get(name, email, 'true', userType, lastRaceNumber);
+        const newUser = insert.get(name, email, 'false', userType, lastRaceNumber);
         return {
             id: newUser.id,
             name: newUser.name,
@@ -196,5 +227,6 @@ export default {
     checkLoggedIn, invalidateUser,
     requestAllRace, requestRacerPosition,
     updateRacerPosition, getAllUsers,
-    getUserByEmail, getUserById
+    getUserByEmail, getUserById, registerRace,
+    getRegisteredRaces, getRegisteredRaceById
 };

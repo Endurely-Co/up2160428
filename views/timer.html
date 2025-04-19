@@ -93,7 +93,7 @@
       formData['longitude'] = position.coords.longitude;
       formData["latitude"] = position.coords.latitude;
 
-      fetch('/api/racer', {
+      fetch('/api/racer-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

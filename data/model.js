@@ -17,6 +17,13 @@ const initDatabase = `
         race_id CHAR(4) CHECK (length(race_id) <= 4) NULL
         );
 
+    CREATE TABLE IF NOT EXISTS registered_race(
+                                                  user_id INTEGER PRIMARY KEY,
+                                                  race_id INTEGER,
+                                                  FOREIGN KEY(user_id) REFERENCES user(id),
+        FOREIGN KEY(race_id) REFERENCES race(id)
+        );
+
     CREATE TABLE IF NOT EXISTS race
     (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,9 +34,11 @@ const initDatabase = `
         cutoff_time  INTEGER NOT NULL,
         email        VARCHAR(50) NOT NULL,
         race_ended   BOOLEAN DEFAULT 0
+--         racer_id INTEGER NULL,
+--         FOREIGN KEY(racer_id) REFERENCES user(id)
         );
 
-    CREATE TABLE IF NOT EXISTS racer(
+    CREATE TABLE IF NOT EXISTS racer_position(
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
         latitude FLOAT(10, 6),
         longitude FLOAT(10, 6),

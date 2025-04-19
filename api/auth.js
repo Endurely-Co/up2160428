@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import db from '../data/queries.js';
 import cache from "../data/cache.js";
+import database from "../data/model.js";
 
 // router.get('/login', function(req, res, next) {
 //     res.send('Logged in!');
@@ -26,9 +27,15 @@ router.post('/login', async (req, res) => {
 
 router.post('/create_user', async (req, res) => {
     let { email, name, user_type } = req.body;
-    const signUp = await db.createNewUser(email, name, user_type);
-    signUp['redirect_url'] = '/login';
-    res.status(201).json(signUp)
+    try{
+        const signUp = await db.createNewUser(email, name, user_type);
+        signUp['redirect_url'] = '/login';
+        res.status(201).json(signUp)
+    }catch(err){
+        return {
+            error: err.message,
+        };
+    }
 });
 
 router.get('/check-login', async (req, res) => {

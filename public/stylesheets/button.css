@@ -12,3 +12,9 @@
 .def-button:hover {
     opacity: 0.8;
 }
+
+.def-button:disabled {
+    background-color: #A5D6A7;
+    cursor: not-allowed;
+    opacity: 0.6;
+}

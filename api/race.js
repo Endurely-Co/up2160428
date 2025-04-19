@@ -7,7 +7,7 @@ import queries from "../data/queries.js";
 router.get('/current-race', async (req, res) => {
     try{
         const newRace = await db.requestLatestRace();
-        return res.status(200).json(newRace);
+        return res.status(200).json({data: newRace});
     }catch (err){
         return res.status(500).send({
             error: "Internal Server Error: " + err,
@@ -76,7 +76,7 @@ async function newRace(req, res){
     }
 }
 
-router.post('/racer', async (req, res) => {
+router.post('/racer-position', async (req, res) => {
     if(cache.getUserType() === 'runner'){
         const {latitude, longitude} = req.body;
         const racer_id = await queries.getUserById();
@@ -87,11 +87,42 @@ router.post('/racer', async (req, res) => {
     return res.status(400).json({message: "User is not a runner"});
 });
 
+
+
+router.get('/registered-race', async (req, res) => {
+    const raceById = await db.getRegisteredRaceById();
+    return res.status(200).send({
+        registered: raceById !== undefined
+    });
+});
+
 router.get('/runner-positions', async (req, res) => {
     const racerPosition = await db.requestRacerPosition();
 
     return res.status(200).json(racerPosition);
 });
+
+
+router.post('/register-race', async (req, res) => {
+    try{
+        const email = cache.getLogIn();
+        const registerRace = await db.registerRace(email);
+        return res.status(200).json(registerRace);
+    }catch (error){
+        const uniqueErr = error.message.includes('UNIQUE');
+        return res.status(500).json({ error: uniqueErr
+                ? "You've already registered for this race"
+                : 'Internal Server Error' });
+    }
+}); //console.error('error.message', error.message);
+
+
+router.get('/register-races', async (req, res) => {
+    const registeredRaces = await db.getRegisteredRaces();
+    return res.status(200).send({
+        data: registeredRaces
+    });
+})
 
 export default router;
 
