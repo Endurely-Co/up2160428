@@ -48,6 +48,12 @@ router.get('/racers', async (req, res) => {
     return res.status(200).json(racers);
 });
 
+// getAllRacePosition
+router.get('/all-racer-board', async (req, res) => {
+    const racers = await db.getAllRacePosition();
+    return res.status(200).json(racers);
+});
+
 router.get('/races', async (req, res) => {
     const races = await db.requestAllRace();
     return res.status(200).json(races)

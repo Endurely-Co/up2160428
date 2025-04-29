@@ -14,4 +14,8 @@ router.get('/timer', (req, res) => {
     res.render('timer', { title: 'Race Timer' });
 });
 
+router.get('/race-board', (req, res) => {
+    res.render('race_board', { title: 'Race Board' });
+});
+
 export default router;

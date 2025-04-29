@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/stylesheets/race_board.css">
+</head>
+<body class="timer-container">
+<h4>
+    Race Board
+</h4>
+<div id="people" class="people-content">
+    <ol class="people-item" id="item"></ol>
+</div>
+<script>
+    const peopleRowItem = document.getElementById('item');
+
+    function showToast(message, type){
+        toast.textContent = message;
+        if(type === 'success'){
+            toast.style.backgroundColor = 'green';
+        }else{
+            toast.style.backgroundColor = 'red';
+        }
+        toast.className = 'toast show';
+
+        setTimeout((event) => {
+            toast.className = 'toast';
+        }, 3000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('data_data', 'data');
+        periodicRacerUpdate();
+    });
+
+    const periodic = timeout => new Promise(resolve => setTimeout(resolve, timeout))
+
+    function periodicRacerUpdate(){
+        getRacers();
+    }
+
+    function getRacers(){
+        fetch('/api/racers', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+            .then((racerList) => {
+                if (racerList.data.length > 0) {
+                    racerList.data.forEach((racer) => {
+                        console.log('data_data', racer);
+                       buildRunnerItems(racer);
+                    });
+                }else{
+                    // Not racer
+                }
+            })
+            .catch((error) => {
+                showToast(error, 'error');
+            });
+    }
+
+    function buildRunnerItems(racer){
+        const item = document.createElement('li');
+        item.textContent = racer.name;
+        peopleRowItem.appendChild(item);
+    }
+</script>
+</body>
+</html>

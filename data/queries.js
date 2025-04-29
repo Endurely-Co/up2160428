@@ -23,6 +23,8 @@ const queryForUserIdByEmail = `SELECT id FROM user WHERE email = ?`;
 
 const queryForAllUsers = `SELECT * FROM user`;
 
+const queryForUserById = `SELECT * FROM user WHERE id = ?`;
+
 const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
@@ -32,11 +34,14 @@ const queryRaceNum = `SELECT race_id FROM user WHERE race_id IS NOT NULL ORDER B
 
 const insertRacerPosition = `INSERT OR REPLACE INTO racer_position(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
 
-const selectRacer = `SELECT * FROM racer_position ORDER BY latitude DESC, longitude ASC`;
+const selectAllRacePosition = `SELECT * FROM racer_position`;
+
+const selectRacer = `SELECT * FROM racer_position ORDER BY latitude DESC, longitude DESC`;
 
 const insertRaceResult = `INSERT OR REPLACE INTO race_result(runner_position, racer_id) VALUES (?, ?);`
 
 const queryRaceResults = `SELECT * FROM race_result ORDER BY runner_position ASC;`
+
 
 async function setRaceResult(){
     const racerLocation = await requestRacerPosition();
@@ -76,9 +81,30 @@ async function getAllUsers(){
     return users.all();
 }
 
+async function getAllRacePosition(){
+    const allRacePosition = await database.prepare(selectAllRacePosition);
+    return allRacePosition.all();
+}
+
 async function requestRacerPosition(){
-    const racer =await database.prepare(selectRacer);
-    return racer.all();
+    const racer = await database.prepare(selectRacer);
+    const userById = await database.prepare(queryForUserById);
+    const result = racer.all().map(racerVal =>{
+        //racerVal.id
+
+        return makeRacerPosition(racerVal, userById.get(racerVal.racer_id));
+    });
+    return {
+        data: result
+    };
+}
+
+function makeRacerPosition(racer, user){
+    return {
+        name: user.name,
+        long: racer.longitude,
+        lat: racer.latitude,
+    };
 }
 
 async function requestAllRace(){
@@ -188,8 +214,8 @@ async function getUserById(){
 }
 
 async function getUserByEmail(){
-    const query = database.prepare(queryForUser);
-    const user = query.get(cache.getLogIn())
+    const query = await database.prepare(queryForUser);
+    const user = query.get(cache.getLogIn());
     return {
         name: user.name,
         email: user.email,
@@ -197,7 +223,7 @@ async function getUserByEmail(){
         id: user.id,
         isLoggedIn: user.isLoggedIn,
     };
-}
+} // file:///Users/admin/WebstormProjects/new_webprog/data/queries.js:200:20
 
 async function changeUserStatus(email, isLoggedIn = true){
     const query = database.prepare(queryForUser);
@@ -228,5 +254,6 @@ export default {
     requestAllRace, requestRacerPosition,
     updateRacerPosition, getAllUsers,
     getUserByEmail, getUserById, registerRace,
-    getRegisteredRaces, getRegisteredRaceById
+    getRegisteredRaces, getRegisteredRaceById,
+    getAllRacePosition
 };

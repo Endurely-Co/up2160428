@@ -102,7 +102,7 @@
       }).then(function(response) {
         return response.json();
       }).then(function(races) {
-        console.log(races);
+        console.log('login_position', races);
       }).catch(function(error) {
         console.log(error);
       });
@@ -118,8 +118,8 @@
       if (localStorage.getItem('user_type') === 'runner') {
 
         const options = {
-          enableHighAccuracy: false,
-          timeout: 10000,
+          enableHighAccuracy: true,
+          timeout: 2000,
           maximumAge: 0
         }
 
