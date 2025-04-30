@@ -48,10 +48,31 @@ router.get('/racers', async (req, res) => {
     return res.status(200).json(racers);
 });
 
+router.post('/suggest-racers', async (req, res) => {
+    try{
+        const inpValue = req.body;
+        const suggestedRacers = await db.getRacers();
+        //const filtered =
+        return res.status(200).json(suggestedRacers);
+    }catch (error){
+        return res.status(500).send({
+            error: "Internal Server Error: " + error
+        })
+    }
+});
+
 // getAllRacePosition
 router.get('/all-racer-board', async (req, res) => {
     const racers = await db.getAllRacePosition();
     return res.status(200).json(racers);
+});
+
+router.put('/start-race/:id', async (req, res) => {
+    const startedRace = await db.updateRaceStatus(req.params.id) // req.params.id
+    if (startedRace.error){
+        return res.status(400).json(startedRace);
+    }
+    return res.status(200).json(startedRace);
 });
 
 router.get('/races', async (req, res) => {

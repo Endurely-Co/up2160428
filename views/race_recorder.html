@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+  <link rel='stylesheet' href='/stylesheets/login.css' />
+  <link rel='stylesheet' href='/stylesheets/button.css' />
+    <link rel="stylesheet" href="/stylesheets/race.css">
+    <title>Title</title>
+</head>
+<body class="timer-container">
+
+<h2>Record Race</h2>
+
+<form id="createSignInForm">
+
+  <div class="container">
+    <label for="racer"><b>Enter Racer</b></label>
+    <input type="text" placeholder="Enter Racer" id="racer" name="racer" required>
+    <div class="dropdown-content" id="user_suggestions"></div>
+
+    <label for="position-select">Select race position:</label>
+    <select name="pets" id="position-select"></select>
+    <!--        <label for="psw"><b>Password</b></label>-->
+    <!--        <input type="password" placeholder="Enter Password" name="psw" required>-->
+
+    <button type="submit" class="def-button">Record Position</button>
+  </div>
+
+</form>
+<script>
+
+  const racePositionSelector = document.getElementById('position-select');
+  const racers = document.getElementById('racers');
+
+  document.addEventListener('DOMContentLoaded', () => {
+    addRacePositions();
+  });
+
+  racers.addEventListener('change', () => {
+
+  });
+
+  fetch('/api/racers/', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then((response) => {
+    return response.json();
+  }).then((racers) => {
+
+  });
+
+  function addRacePositions(){
+    for(let i =1; i < 30; i++){
+      const positionOption = document.createElement('option');
+      positionOption.textContent = `${i}${formatPos(i)} position`
+      positionOption.value = i.toString();
+      racePositionSelector.appendChild(positionOption);
+    }
+  }
+
+  function formatPos(rawPosition){
+    const thPos = rawPosition % 10;
+    if([11, 12, 13].includes(rawPosition)){
+      return 'th';
+    }
+    switch (thPos) {
+      case 1:
+        return 'st'
+      case 2:
+        return 'nd'
+      case 3:
+        return 'rd'
+      default:
+        return 'th'
+    }
+  }
+
+</script>
+</body>
+</html>

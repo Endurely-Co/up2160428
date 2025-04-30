@@ -18,4 +18,8 @@ router.get('/race-board', (req, res) => {
     res.render('race_board', { title: 'Race Board' });
 });
 
+router.get('/record-race', (req, res) => {
+    res.render('race_recorder', { title: 'Race Board' });
+});
+
 export default router;

@@ -33,7 +33,8 @@ const initDatabase = `
         start_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
         cutoff_time  INTEGER NOT NULL,
         email        VARCHAR(50) NOT NULL,
-        race_ended   BOOLEAN DEFAULT 0
+        race_ended   BOOLEAN DEFAULT 0,
+        race_started BOOLEAN DEFAULT 0
 --         racer_id INTEGER NULL,
 --         FOREIGN KEY(racer_id) REFERENCES user(id)
         );

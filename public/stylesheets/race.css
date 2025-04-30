@@ -3,7 +3,7 @@ body {font-family: Arial, Helvetica, sans-serif;}
 .timer-container {
     border: 3px solid #f1f1f1;
     padding: 20px;
-    height: 90vh;
+    height: 100%;
     margin: 10px 0 10px 0;
 }
 
@@ -23,4 +23,17 @@ body {font-family: Arial, Helvetica, sans-serif;}
     text-align: center;
 }
 
+.btn-container {
+    display: grid;
+    row-gap: 50px;
+    grid-template-columns: auto auto auto;
+    background-color: dodgerblue;
+}
 
+.btn-container > div {
+    background-color: #f1f1f1;
+    border: 1px solid black;
+    padding: 20px;
+    font-size: 30px;
+    text-align: center;
+}

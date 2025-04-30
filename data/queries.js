@@ -2,7 +2,9 @@ import database from "./model.js";
 import cache from "./cache.js";
 
 
-const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email) VALUES(?, ?, ?, ?, ?)`;
+const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?, ?, ?)`;
+
+const updateRaceStart = `UPDATE race SET race_started = ? WHERE id = ?`
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
@@ -22,6 +24,8 @@ const queryForUser = `SELECT * FROM user WHERE email = ?`;
 const queryForUserIdByEmail = `SELECT id FROM user WHERE email = ?`;
 
 const queryForAllUsers = `SELECT * FROM user`;
+
+const queryForOnlyRacers = `SELECT * FROM user WHERE user_type = runner`;
 
 const queryForUserById = `SELECT * FROM user WHERE id = ?`;
 
@@ -51,6 +55,35 @@ async function setRaceResult(){
     }
 
     return (await database.prepare(queryRaceResults));
+}
+
+async function getRacers(){
+    const racers = await database.prepare(queryForOnlyRacers);
+    return racers.all();
+}
+
+
+// TODO: Refactor later on
+async function updateRaceStatus(raceId){
+    try {
+        const updateRace = await database.prepare(updateRaceStart);
+        updateRace.get(1, raceId);
+        return {
+            message: 'Race started'
+        };
+    }catch (err) {
+        return {
+            error: err.message
+        }
+    }
+}
+
+function tryCatch(block, exceptionBlock){
+    try {
+        block();
+    }catch (e) {
+        exceptionBlock(e)
+    }
 }
 
 async function getRegisteredRaces(){
@@ -255,5 +288,6 @@ export default {
     updateRacerPosition, getAllUsers,
     getUserByEmail, getUserById, registerRace,
     getRegisteredRaces, getRegisteredRaceById,
-    getAllRacePosition
+    getAllRacePosition, updateRaceStatus,
+    getRacers
 };
