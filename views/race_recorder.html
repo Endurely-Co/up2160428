@@ -2,54 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel='stylesheet' href='/stylesheets/navbar.css' />
   <link rel='stylesheet' href='/stylesheets/login.css' />
   <link rel='stylesheet' href='/stylesheets/button.css' />
     <link rel="stylesheet" href="/stylesheets/race.css">
     <title>Title</title>
 </head>
-<body class="timer-container">
 
+
+<body>
+<div class="topnav web-nav" id="topnav">
+  <a href="/" class="active">UP2160428</a>
+  <div  style="float: right;
+     margin-right: 10px;">
+    <button id="logout">Logout</button>
+  </div>
+</div>
+<div  class="timer-container">
 <h2>Record Race</h2>
 
-<form id="createSignInForm">
+<form id="record-race-form">
 
   <div class="container">
-    <label for="racer"><b>Enter Racer</b></label>
-    <input type="text" placeholder="Enter Racer" id="racer" name="racer" required>
-    <div class="dropdown-content" id="user_suggestions"></div>
 
-    <label for="position-select">Select race position:</label>
+
+    <label for="laps"><b>Laps</b></label>
+    <input type="text" placeholder="Lapse" id="laps" name="laps" required disabled>
+
+
+    <label for="racer-select"><b>Select race position:</b></label>
+    <select name="pets" id="racer-select"></select>
+<!--    <div class="dropdown-content" id="user_suggestions"></div>-->
+
+    <label for="position-select"><b>Select race position:</b></label>
     <select name="pets" id="position-select"></select>
-    <!--        <label for="psw"><b>Password</b></label>-->
-    <!--        <input type="password" placeholder="Enter Password" name="psw" required>-->
 
-    <button type="submit" class="def-button">Record Position</button>
+    <button type="submit" class="def-button" id="record-race-btn">Record Position</button>
   </div>
 
 </form>
+</div>
 <script>
 
   const racePositionSelector = document.getElementById('position-select');
-  const racers = document.getElementById('racers');
+  const laps = document.getElementById('laps');
+  const recordRaceBtn = document.getElementById('record-race-btn');
+  const racerSelect = document.getElementById('racer-select');
+  const LAPS = 'laps'
 
   document.addEventListener('DOMContentLoaded', () => {
     addRacePositions();
-  });
-
-  racers.addEventListener('change', () => {
-
-  });
-
-  fetch('/api/racers/', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
+    getRacers();
+    const recordedLaps = localStorage.getItem(LAPS);
+    if (recordedLaps === null) {
+      return;
     }
-  }).then((response) => {
-    return response.json();
-  }).then((racers) => {
-
+    const rLaps = JSON.parse(recordedLaps)[LAPS];
+    console.log(rLaps);
+    laps.value = `${rLaps.length} Laps`;
   });
+
+  recordRaceBtn.onclick = () => {
+    //localStorage.removeItem(LAPS)
+  }
+
+  function getRacers(){
+    fetch('/api/racers/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      return response.json();
+    }).then((data) => {
+      const racers = data.racers;
+      for (let i =0; i < racers.length; i++) {
+        const racerOption = document.createElement('option');
+        racerOption.textContent = `Runner ${racers[i].race_id}`;
+        racerOption.value = racers[i].race_id;
+        racerSelect.appendChild(racerOption);
+      }
+      console.log(racers);
+    }).catch((error) => {
+      console.log('error', error);
+    });
+  }
 
   function addRacePositions(){
     for(let i =1; i < 30; i++){

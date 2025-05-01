@@ -15,10 +15,10 @@
     <button id="stop" type="button" class="ctr-button stop">Stop</button>
   </div>
   <div id="lapses-container"></div>
-
   <div>
     <ul id="lapses"></ul>
   </div>
+  <button type="submit" class="def-button" id="submit-laps-btn" disabled>Submit Laps</button>
 
 </div>
 
@@ -35,6 +35,10 @@
     const lapsesNode = document.getElementById('lapses');
     const topNav = document.getElementById('topnav');
     const controls = document.getElementById('controls');
+    const submitLapsBtn = document.getElementById('submit-laps-btn');
+
+    let endTime = undefined;
+    let raceLapseData = []
     // const lapseTemplate = document.getElementById("template");
 
     // let lapses = [];
@@ -44,20 +48,31 @@
     let clockNow =0;
     let isRunning = false;
     const startText = 'Start';
+    let lapCount = 0;
 
     lapseBtn.addEventListener('click', addNewLapse);
+    submitLapsBtn.addEventListener('click', submitLaps);
+    stopBtn.addEventListener('click', stopTimer);
 
-    let lapCount = 0;
+    function submitLaps(){
+      // submit laps
+      localStorage.setItem('laps', JSON.stringify({
+        laps: raceLapseData
+      }));
+      window.location.href = '/record-race';
+    }
 
     function addNewLapse(event){
       if (isRunning){
         lapCount += 1;
-        let li = document.createElement('ol');
+        let li = document.createElement('li');
         li.className = 'rounded-list';
         li.appendChild(document.createTextNode(`Lap ${lapCount}: ` + timer.textContent));
         lapsesNode.appendChild(li);
+        raceLapseData.push(timer.textContent);
       }
     }
+
 
     function pauseTimer() {
       if(isRunning && intervalId){
@@ -76,13 +91,64 @@
       controls.className = 'controls hide';
     }
 
+
+    function disableSubmitBtn(){
+      submitLapsBtn.disabled = true;
+    }
+
+    function enableSubmitBtn(){
+      submitLapsBtn.disabled = false;
+    }
+
+
     function startTimer() {
       if(!isRunning && !intervalId){
-        startedTime = Date.now() - elapsedTime;
+        const startTime = Date.now()
+        startedTime = startTime  - elapsedTime;
         intervalId = setInterval(updateClock, 10)
         startBtn.textContent = "Pause"
         isRunning = true;
+        updateStartTime(startTime);
+        disableSubmitBtn();
       }
+    }
+
+    function updateStartTime(startTime){
+      fetch('/api/start-race', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          start_time: startTime
+        })
+      }).then((res) => {
+        return res.json();
+      }).then((data) => {
+
+        console.log('updateRace---->', data);
+      }).catch((err) => {
+        console.log('updateRace_err---->', err);
+      });
+    }
+
+    function updateEndTime(endTime){
+      fetch('/api/end-race', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          end_time: endTime
+        })
+      }).then((res) => {
+        return res.json();
+      }).then((data) => {
+
+        console.log('updateEndRace---->', data);
+      }).catch((err) => {
+        console.log('updateEndRace_err---->', err);
+      });
     }
 
     function error(error){
@@ -138,12 +204,10 @@
       startedTime =0;
       isRunning = false;
       intervalId = null;
-
-      while (lapsesNode.hasChildNodes()){
-        lapsesNode.removeChild(lapsesNode.firstChild);
-      }
+      updateEndTime(endTime);
       updateClock(true);
       localStorage.setItem('timer_status', 'stopped');
+      enableSubmitBtn();
     }
 
     function updateClock(reset = false) {
@@ -151,7 +215,8 @@
         timer.textContent = '00:00:00.000';
         return;
       }
-      const clockNow = new Date(Date.now() - startedTime);
+      endTime = Date.now();
+      const clockNow = new Date(endTime - startedTime);
       timer.textContent = `${padTime(clockNow.getUTCHours())}:${padTime(clockNow.getUTCMinutes())}:${padTime(clockNow.getUTCSeconds())}.${padTimeMs(clockNow.getMilliseconds())}`;
     }
 
@@ -201,7 +266,6 @@
       }
     });
 
-    stopBtn.addEventListener('click', stopTimer);
 
 
     function showToast(message, type){

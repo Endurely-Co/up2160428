@@ -34,10 +34,17 @@ const initDatabase = `
         cutoff_time  INTEGER NOT NULL,
         email        VARCHAR(50) NOT NULL,
         race_ended   BOOLEAN DEFAULT 0,
-        race_started BOOLEAN DEFAULT 0
+        race_started BOOLEAN DEFAULT 0,
 --         racer_id INTEGER NULL,
 --         FOREIGN KEY(racer_id) REFERENCES user(id)
         );
+
+    CREATE TABLE IF NOT EXISTS lapse{
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        lap DATETIME DEFAULT CURRENT_TIMESTAMP
+        race_id INTEGER,
+        FOREIGN KEY(race_id) REFERENCES race(id)
+    }
 
     CREATE TABLE IF NOT EXISTS racer_position(
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -48,10 +55,11 @@ const initDatabase = `
         FOREIGN KEY(racer_id) REFERENCES user(id)
         );
 
-    CREATE TABLE IF NOT EXISTS race_result(
+    CREATE TABLE IF NOT EXISTS race_record(
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
         runner_position INTEGER NOT NULL,
         racer_id INTEGER PRIMARY KEY,
+        laps INTEGER NOT NULL,
         FOREIGN KEY(racer_id) REFERENCES user(id)
     );
 `

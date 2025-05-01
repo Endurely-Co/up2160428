@@ -2,13 +2,17 @@ import database from "./model.js";
 import cache from "./cache.js";
 
 
-const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?, ?, ?)`;
+const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?, ?)`;
 
-const updateRaceStart = `UPDATE race SET race_started = ? WHERE id = ?`
+const updateRaceStart = `UPDATE race SET race_started = ?, start_time = ? WHERE id = ?`
+
+const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE id = ?`
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const allRaces = `SELECT * FROM race ORDER BY start_time`;
+
+const queryRaceId = `SELECT id FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
@@ -25,7 +29,7 @@ const queryForUserIdByEmail = `SELECT id FROM user WHERE email = ?`;
 
 const queryForAllUsers = `SELECT * FROM user`;
 
-const queryForOnlyRacers = `SELECT * FROM user WHERE user_type = runner`;
+const queryForOnlyRacers = `SELECT * FROM user WHERE user_type = 'runner' ORDER BY race_id ASC`;
 
 const queryForUserById = `SELECT * FROM user WHERE id = ?`;
 
@@ -42,9 +46,9 @@ const selectAllRacePosition = `SELECT * FROM racer_position`;
 
 const selectRacer = `SELECT * FROM racer_position ORDER BY latitude DESC, longitude DESC`;
 
-const insertRaceResult = `INSERT OR REPLACE INTO race_result(runner_position, racer_id) VALUES (?, ?);`
+const insertRaceResult = `INSERT OR REPLACE INTO race_record(runner_position, racer_id) VALUES (?, ?);`
 
-const queryRaceResults = `SELECT * FROM race_result ORDER BY runner_position ASC;`
+const queryRaceResults = `SELECT * FROM race_record ORDER BY runner_position ASC;`
 
 
 async function setRaceResult(){
@@ -64,10 +68,12 @@ async function getRacers(){
 
 
 // TODO: Refactor later on
-async function updateRaceStatus(raceId){
+async function updateStartRace(startTime){
     try {
+
+        const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceStart);
-        updateRace.get(1, raceId);
+        updateRace.run(1, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
         return {
             message: 'Race started'
         };
@@ -78,11 +84,28 @@ async function updateRaceStatus(raceId){
     }
 }
 
-function tryCatch(block, exceptionBlock){
+
+function isoToSQLiteDatetime(dateTime) {
+    const date = new Date('2025-05-01T19:06:52.885Z');
+    date.setTime(dateTime);
+    const pad = (n) => String(n).padStart(2, '0');
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+        `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+async function updateEndRace(endTime){
     try {
-        block();
-    }catch (e) {
-        exceptionBlock(e)
+        const raceById = await database.prepare(queryRaceId);
+        const updateRace = await database.prepare(updateRaceEnd);
+        updateRace.run(0, isoToSQLiteDatetime(endTime), raceById.all()[0].id);
+        return {
+            message: 'Race ended'
+        };
+    }catch (err) {
+        return {
+            error: err.message
+        }
     }
 }
 
@@ -119,12 +142,21 @@ async function getAllRacePosition(){
     return allRacePosition.all();
 }
 
+
+async function requestAllRacers() {
+    const racer = await database.prepare(queryForOnlyRacers);
+    return {
+        racers: racer.all()
+    };
+}
+
+// @deprecated
 async function requestRacerPosition(){
     const racer = await database.prepare(selectRacer);
     const userById = await database.prepare(queryForUserById);
+    console.log('makeRacerPosition', racer.all(), userById);
     const result = racer.all().map(racerVal =>{
         //racerVal.id
-
         return makeRacerPosition(racerVal, userById.get(racerVal.racer_id));
     });
     return {
@@ -134,6 +166,7 @@ async function requestRacerPosition(){
 
 function makeRacerPosition(racer, user){
     return {
+        runner_id: user.race_id,
         name: user.name,
         long: racer.longitude,
         lat: racer.latitude,
@@ -288,6 +321,6 @@ export default {
     updateRacerPosition, getAllUsers,
     getUserByEmail, getUserById, registerRace,
     getRegisteredRaces, getRegisteredRaceById,
-    getAllRacePosition, updateRaceStatus,
-    getRacers
+    getAllRacePosition, updateStartRace,
+    getRacers, requestAllRacers, updateEndRace
 };

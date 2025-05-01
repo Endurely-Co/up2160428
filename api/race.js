@@ -44,7 +44,7 @@ router.get('/user-type', async (req, res) => {
 });
 // requestRacerPosition
 router.get('/racers', async (req, res) => {
-    const racers = await db.requestRacerPosition();
+    const racers = await db.requestAllRacers();
     return res.status(200).json(racers);
 });
 
@@ -67,9 +67,19 @@ router.get('/all-racer-board', async (req, res) => {
     return res.status(200).json(racers);
 });
 
-router.put('/start-race/:id', async (req, res) => {
-    const startedRace = await db.updateRaceStatus(req.params.id) // req.params.id
-    if (startedRace.error){
+router.put('/start-race', async (req, res) => {
+    const {start_time} = req.body;
+    const startedRace = await db.updateStartRace( start_time); // req.params.id
+    if (startedRace.error || start_time === undefined){
+        return res.status(400).json(startedRace);
+    }
+    return res.status(200).json(startedRace);
+});
+
+router.put('/end-race', async (req, res) => {
+    const {end_time} = req.body;
+    const startedRace = await db.updateEndRace(end_time); // req.params.id
+    if (startedRace.error || end_time === undefined){
         return res.status(400).json(startedRace);
     }
     return res.status(200).json(startedRace);
@@ -125,7 +135,6 @@ router.get('/registered-race', async (req, res) => {
 
 router.get('/runner-positions', async (req, res) => {
     const racerPosition = await db.requestRacerPosition();
-
     return res.status(200).json(racerPosition);
 });
 
