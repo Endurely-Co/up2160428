@@ -39,7 +39,12 @@ router.post('/create_user', async (req, res) => {
 });
 
 router.get('/check-login', async (req, res) => {
-    res.status(200).json(await db.checkLoggedIn());
+    try{
+        const checkLogin = await db.checkLoggedIn();
+        res.status(200).json(checkLogin);
+    }catch (e) {
+        res.status(500).send({ error: "Internal Server Error"  });
+    }
 });
 
 router.get('user-type', async (req, res) => {

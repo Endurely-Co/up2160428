@@ -25,7 +25,6 @@
     </div>
 </div>
 <div class="topnav mobile-nav" id="topnav-mob">
-    <a href="/" class="active">UP2160428</a>
     <div id="my-links"></div>
     <a href="javascript:void(0);" onclick="doLogOut()" id="mob-logout">Logout</a>
     <a href="javascript:void(0);" class="icon" onclick="myFunction()">
@@ -127,8 +126,8 @@
         if(firstLoad){
             const cachedSelection = localStorage.getItem(SELECTED_PAGE_KEY);
             let selectedPage = parseInt(cachedSelection ? cachedSelection : `${START_TAB}`);
-            console.log('firstLoad', firstLoad);
-            selectedTabId = topNav.children[selectedPage].id;
+            console.log('firstLoad', topNav.children[selectedPage] === undefined, topNav.children[selectedPage]);
+            selectedTabId = topNav.children[selectedPage] === undefined ? 0 : topNav.children[selectedPage].id;
             loadPage(topNav.children[selectedPage].target);
             topNav.children[selectedPage].className = "active";
         }
@@ -152,8 +151,6 @@
                         return;
                     }
 
-
-                    console.log('selectedTab', topNav.children[i].target);
                     if(selectedTabId !== undefined){
                         document.getElementById(selectedTabId)
                             .classList.remove('active');
@@ -231,7 +228,6 @@
         fetch(htmlUrl)
             .then((response) => response.text())
             .then((html) => {
-                console.log('DOM fully loaded and parsed');
                 const pageFrag = document.createRange().createContextualFragment(html);
                 removeNode(content);
                 content.appendChild(pageFrag);

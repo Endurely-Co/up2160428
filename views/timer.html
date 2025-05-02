@@ -49,16 +49,22 @@
     let isRunning = false;
     const startText = 'Start';
     let lapCount = 0;
+    let raceId = undefined;
 
     lapseBtn.addEventListener('click', addNewLapse);
     submitLapsBtn.addEventListener('click', submitLaps);
     stopBtn.addEventListener('click', stopTimer);
+    populateCurrentRace();
 
     function submitLaps(){
       // submit laps
       localStorage.setItem('laps', JSON.stringify({
-        laps: raceLapseData
+        laps: raceLapseData,
+        race_id: raceId
       }));
+      for (let i = 0; i < topNav.children.length; i++) {
+        topNav.children[i].style.display = 'none';
+      }
       window.location.href = '/record-race';
     }
 
@@ -86,9 +92,10 @@
     }
 
     const userTypeVal = localStorage.getItem('user_type');
+    console.log('userTypeVal', userTypeVal);
     if(userTypeVal !== 'organiser'){
-      console.log('not organiser', 'error');
       controls.className = 'controls hide';
+      submitLapsBtn.style.visibility = 'hidden';
     }
 
 
@@ -208,6 +215,25 @@
       updateClock(true);
       localStorage.setItem('timer_status', 'stopped');
       enableSubmitBtn();
+    }
+
+
+    function populateCurrentRace(){
+      fetch('/api/current-race', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then((res) => res.json())
+              .then((data) => {
+                if(data.error){
+                  showToast("An error occur", "error");
+                }else{
+                  raceId = data.data[0].id;
+                }
+              }).catch((err) => {
+        console.log('User not logged inqq', 'error');
+      });
     }
 
     function updateClock(reset = false) {

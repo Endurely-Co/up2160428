@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/stylesheets/race_board.css">
 </head>
 <body class="timer-container">
+
 <h4>
     Race Board
 </h4>
@@ -14,61 +15,62 @@
     <ol id="item"></ol>
 </div>
 <script>
-    const peopleRowItem = document.getElementById('item');
+    if (document.readyState !== "loading") {
+        const peopleRowItem = document.getElementById('item');
 
-    function showToast(message, type){
-        toast.textContent = message;
-        if(type === 'success'){
-            toast.style.backgroundColor = 'green';
-        }else{
-            toast.style.backgroundColor = 'red';
-        }
-        toast.className = 'toast show';
-
-        setTimeout((event) => {
-            toast.className = 'toast';
-        }, 3000);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log('data_data', 'data');
-        periodicRacerUpdate();
-    });
-
-    const periodic = timeout => new Promise(resolve => setTimeout(resolve, timeout))
-
-    function periodicRacerUpdate(){
-        getRacers();
-    }
-
-    function getRacers(){
-        fetch('/api/racers', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        function showToast(message, type){
+            toast.textContent = message;
+            if(type === 'success'){
+                toast.style.backgroundColor = 'green';
+            }else{
+                toast.style.backgroundColor = 'red';
             }
-        }).then(response => response.json())
-            .then((racerList) => {
-                if (racerList.data.length > 0) {
-                    racerList.data.forEach((racer) => {
-                        console.log('data_data', racer);
-                       buildRunnerItems(racer);
-                    });
-                }else{
-                    // Not racer
+            toast.className = 'toast show';
+
+            setTimeout((event) => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+
+        periodicRacerUpdate();
+
+        const periodic = timeout => new Promise(resolve => setTimeout(resolve, timeout))
+
+        function periodicRacerUpdate(){
+            getRacers();
+        }
+
+        function getRacers(){
+            fetch('/api/racers', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-            })
-            .catch((error) => {
-                showToast(error, 'error');
-            });
+            }).then(response => response.json())
+                .then((racerList) => {
+                    console.log('racerList', racerList.racers[0]);
+                    if (racerList.racers.length > 0) {
+                        racerList.racers.forEach((racer) => {
+                            buildRunnerItems(racer);
+                        });
+                    }else{
+                        // Not racer
+                    }
+                })
+                .catch((error) => {
+                    console.log('racerList', `error: ${error}`);
+                    showToast(error, 'error');
+                });
+        }
+
+        function buildRunnerItems(racer){
+            const item = document.createElement('li');
+            item.textContent = racer.name;
+            item.classList.add('people-item');
+            peopleRowItem.appendChild(item);
+        }
     }
 
-    function buildRunnerItems(racer){
-        const item = document.createElement('li');
-        item.textContent = racer.name;
-        item.classList.add('people-item');
-        peopleRowItem.appendChild(item);
-    }
 </script>
 </body>
 </html>

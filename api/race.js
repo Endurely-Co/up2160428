@@ -35,7 +35,8 @@ router.get('/user-type', async (req, res) => {
         raceData['id'] = 'cur-race';
         raceData['name'] = 'Current Race';
         [timer,raceData,
-            {id: 'new-race', name: 'New Race', page: 'new-race'}]
+            {id: 'new-race', name: 'New Race', page: 'new-race'},
+            {id: 'race-board', name: 'Participants', page: 'race-board'}]
             .forEach((menu) => {
             response['menus'].push(menu)
         });
@@ -135,6 +136,23 @@ router.get('/registered-race', async (req, res) => {
 
 router.get('/runner-positions', async (req, res) => {
     const racerPosition = await db.requestRacerPosition();
+    return res.status(200).json(racerPosition);
+});
+
+router.post('/record-laps', async (req, res) => {
+    const {laps, position, racer_id, race_id} = req.body;
+    let raceLaps = [];
+    // racerPos, lapsTime, racerId, raceId
+    for (let i =0; i< laps.length; i++){
+        const lap = laps[i];
+        const racerPosition = await db.recordLaps(position, lap, racer_id, race_id);
+        raceLaps.push(racerPosition);
+    }
+    return res.status(200).json(raceLaps);
+});
+
+router.get('/laps', async (req, res) => {
+    const racerPosition = await db.getNewLaps();
     return res.status(200).json(racerPosition);
 });
 

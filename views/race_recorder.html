@@ -12,13 +12,7 @@
 
 
 <body>
-<div class="topnav web-nav" id="topnav">
-  <a href="/" class="active">UP2160428</a>
-  <div  style="float: right;
-     margin-right: 10px;">
-    <button id="logout">Logout</button>
-  </div>
-</div>
+
 <div  class="timer-container">
 <h2>Record Race</h2>
 
@@ -38,7 +32,7 @@
     <label for="position-select"><b>Select race position:</b></label>
     <select name="pets" id="position-select"></select>
 
-    <button type="submit" class="def-button" id="record-race-btn">Record Position</button>
+    <button type="submit" class="def-button" >Record Position</button>
   </div>
 
 </form>
@@ -47,9 +41,12 @@
 
   const racePositionSelector = document.getElementById('position-select');
   const laps = document.getElementById('laps');
-  const recordRaceBtn = document.getElementById('record-race-btn');
   const racerSelect = document.getElementById('racer-select');
+  const raceForm = document.getElementById('record-race-form');
+
   const LAPS = 'laps'
+  let raceLaps = undefined;
+  let raceId = undefined;
 
   document.addEventListener('DOMContentLoaded', () => {
     addRacePositions();
@@ -59,12 +56,42 @@
       return;
     }
     const rLaps = JSON.parse(recordedLaps)[LAPS];
-    console.log(rLaps);
+    raceId = JSON.parse(recordedLaps)['race_id'];
+    raceLaps = rLaps;
     laps.value = `${rLaps.length} Laps`;
   });
 
-  recordRaceBtn.onclick = () => {
-    //localStorage.removeItem(LAPS)
+  raceForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    console.log('position_position', {
+      lap: raceLaps,
+      position: racePositionSelector.value,
+      racer_id: racerSelect.value,
+      race_id: raceId,
+    });
+    recordLabs()
+  });
+
+
+  function recordLabs(){
+    if (raceLaps === undefined) return;
+    fetch('/api/record-laps', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        laps: raceLaps,
+        position: racePositionSelector.value,
+        racer_id: racerSelect.value,
+        race_id: raceId,
+      })
+    }).then((response) => {
+      return response.json();
+    }).then((data) =>{
+      console.log(data);
+    });
   }
 
   function getRacers(){

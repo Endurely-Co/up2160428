@@ -1,8 +1,4 @@
 
-body {
-    border: 3px solid #f1f1f1;
-    padding: 10px;
-}
 
 .people-content {
     display: block;
@@ -12,12 +8,11 @@ body {
 
 
 .people-item {
-    border: 2px solid #A5D6A7;
     background-color: #4CAF50;
     border-radius: 12px;
     align-content: center;
     padding: 10px 0 10px 0;
-    margin: 20px 0 0 0;
+    margin: 10px 0 0 0;
     justify-content: center;
 }
 

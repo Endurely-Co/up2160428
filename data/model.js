@@ -7,8 +7,7 @@ const __dirname = path.dirname(__filename);
 const database = new DatabaseSync(`${__dirname}/race.db`);
 
 const initDatabase = `
-    CREATE TABLE IF NOT EXISTS user
-    (
+    CREATE TABLE IF NOT EXISTS user(
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         email      VARCHAR(50) UNIQUE                    NOT NULL,
         name       VARCHAR(50)                           NOT NULL,
@@ -24,8 +23,7 @@ const initDatabase = `
         FOREIGN KEY(race_id) REFERENCES race(id)
         );
 
-    CREATE TABLE IF NOT EXISTS race
-    (
+    CREATE TABLE IF NOT EXISTS race(
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
         name         VARCHAR(100)  NOT NULL,
         loop_km      DECIMAL(5, 2) NOT NULL,
@@ -34,17 +32,21 @@ const initDatabase = `
         cutoff_time  INTEGER NOT NULL,
         email        VARCHAR(50) NOT NULL,
         race_ended   BOOLEAN DEFAULT 0,
-        race_started BOOLEAN DEFAULT 0,
+        race_started BOOLEAN DEFAULT 0
 --         racer_id INTEGER NULL,
 --         FOREIGN KEY(racer_id) REFERENCES user(id)
         );
 
-    CREATE TABLE IF NOT EXISTS lapse{
+    CREATE TABLE IF NOT EXISTS race_laps(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        lap DATETIME DEFAULT CURRENT_TIMESTAMP
-        race_id INTEGER,
+        created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+        racer_pos INTEGER NOT NULL,
+        laps_time TEXT NOT NULL,
+        racer_id  INTEGER NOT NULL,
+        race_id INTEGER NOT NULL,
+        FOREIGN KEY(racer_id) REFERENCES user(id),
         FOREIGN KEY(race_id) REFERENCES race(id)
-    }
+        );
 
     CREATE TABLE IF NOT EXISTS racer_position(
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -60,7 +62,7 @@ const initDatabase = `
         runner_position INTEGER NOT NULL,
         racer_id INTEGER PRIMARY KEY,
         laps INTEGER NOT NULL,
-        FOREIGN KEY(racer_id) REFERENCES user(id)
+        FOREIGN KEY(racer_id) REFERENCES race_laps(id)
     );
 `
 

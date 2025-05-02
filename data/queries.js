@@ -50,6 +50,10 @@ const insertRaceResult = `INSERT OR REPLACE INTO race_record(runner_position, ra
 
 const queryRaceResults = `SELECT * FROM race_record ORDER BY runner_position ASC;`
 
+const insertNewLaps = `INSERT OR REPLACE INTO race_laps(racer_pos, laps_time, racer_id, race_id) VALUES (?, ?, ?, ?);`
+
+const queryNewLaps = `SELECT * FROM race_laps`;
+
 
 async function setRaceResult(){
     const racerLocation = await requestRacerPosition();
@@ -59,6 +63,19 @@ async function setRaceResult(){
     }
 
     return (await database.prepare(queryRaceResults));
+}
+
+async function recordLaps(racerPos, lapsTime, racerId, raceId){
+    const newLaps = await database.prepare(insertNewLaps);
+    newLaps.run(racerPos, lapsTime, racerId, raceId);
+    return {
+        message: 'Laps record added successfully.',
+    }
+}
+
+async function getNewLaps(){
+    const newLaps = await database.prepare(queryNewLaps);
+    return newLaps.all();
 }
 
 async function getRacers(){
@@ -322,5 +339,6 @@ export default {
     getUserByEmail, getUserById, registerRace,
     getRegisteredRaces, getRegisteredRaceById,
     getAllRacePosition, updateStartRace,
-    getRacers, requestAllRacers, updateEndRace
+    getRacers, requestAllRacers, updateEndRace,
+    recordLaps, getNewLaps
 };
