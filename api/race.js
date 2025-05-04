@@ -68,6 +68,11 @@ router.get('/all-racer-board', async (req, res) => {
     return res.status(200).json(racers);
 });
 
+router.get('/start-time', async (req, res) => {
+    const raceStartTime = await db.getRaceStartTime();
+    return res.status(200).json(raceStartTime);
+})
+
 router.put('/start-race', async (req, res) => {
     const {start_time} = req.body;
     const startedRace = await db.updateStartRace( start_time); // req.params.id

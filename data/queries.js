@@ -10,7 +10,9 @@ const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE i
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
-const allRaces = `SELECT * FROM race ORDER BY start_time`;
+const allRaces = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
+
+const queryStartTime = `SELECT start_time FROM race ORDER BY start_time`;
 
 const queryRaceId = `SELECT id FROM race ORDER BY start_time DESC LIMIT 1`;
 
@@ -87,7 +89,6 @@ async function getRacers(){
 // TODO: Refactor later on
 async function updateStartRace(startTime){
     try {
-
         const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceStart);
         updateRace.run(1, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
@@ -98,6 +99,14 @@ async function updateStartRace(startTime){
         return {
             error: err.message
         }
+    }
+}
+
+async function getRaceStartTime(){
+    //database.prepare(`DELETE FROM race WHERE start_time != null`);
+    const startTime = await database.prepare(queryStartTime);
+    return {
+        start_time: startTime.all()[0]
     }
 }
 
@@ -340,5 +349,5 @@ export default {
     getRegisteredRaces, getRegisteredRaceById,
     getAllRacePosition, updateStartRace,
     getRacers, requestAllRacers, updateEndRace,
-    recordLaps, getNewLaps
+    recordLaps, getNewLaps, getRaceStartTime
 };

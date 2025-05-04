@@ -55,6 +55,7 @@
     submitLapsBtn.addEventListener('click', submitLaps);
     stopBtn.addEventListener('click', stopTimer);
     populateCurrentRace();
+    getStartTime();
 
     function submitLaps(){
       // submit laps
@@ -82,10 +83,12 @@
 
     function pauseTimer() {
       if(isRunning && intervalId){
+        const nowTime = Date.now();
         startBtn.textContent = "Resume";
         clearInterval(intervalId);
         intervalId = null;
-        elapsedTime = Date.now() - startedTime;
+        elapsedTime = nowTime - startedTime;
+        updateStartTime(nowTime);
         console.log("pause", clockNow);
         isRunning = false;
       }
@@ -108,19 +111,21 @@
     }
 
 
-    function startTimer() {
+    async function startTimer() {
       if(!isRunning && !intervalId){
-        const startTime = Date.now()
-        startedTime = startTime  - elapsedTime;
+        let nowTime = Date.now();
+        //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
+        updateStartTime(nowTime); // Query time and start
+        startedTime = nowTime  - elapsedTime;
         intervalId = setInterval(updateClock, 10)
         startBtn.textContent = "Pause"
         isRunning = true;
-        updateStartTime(startTime);
         disableSubmitBtn();
       }
     }
 
     function updateStartTime(startTime){
+      // TODO: Add timer state(start, pause, stop)
       fetch('/api/start-race', {
         method: 'PUT',
         headers: {
@@ -178,6 +183,31 @@
         console.log('login_position', races);
       }).catch(function(error) {
         console.log(error);
+      });
+    }
+
+    function getStartTime(){
+      fetch('/api/start-time', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'GET'
+      }).then(function(response) {
+        return response.json();
+      }).then(function(startTime) {
+        if (startTime.start_time.start_time.split('-')[0] === 'NaN') return;
+        //race.start_time.start_time
+        let nowTime = new Date(startTime.start_time.start_time).getTime();
+        console.log("nowTime", nowTime, startTime.start_time.start_time);
+        //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
+        updateStartTime(nowTime); // Query time and start
+        startedTime = nowTime  - elapsedTime;
+        intervalId = setInterval(updateClock, 10)
+        startBtn.textContent = "Pause"
+        isRunning = true;
+
+      }).catch((error) => {
+        console.log('error', error);
       });
     }
 
@@ -282,11 +312,11 @@
       return timeString;
     };
 
-    startBtn.addEventListener('click', () =>{
+    startBtn.addEventListener('click', async () =>{
       localStorage.setItem('timer_status', 'running');
       console.log('start');
       if([startText, 'Resume'].includes(startBtn.textContent)){
-        startTimer();
+        await startTimer();
       }else{
         pauseTimer();
       }
