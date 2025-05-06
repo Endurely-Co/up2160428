@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel='stylesheet' href='/stylesheets/navbar.css' />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Race Dashboard</title>
+  <link rel="stylesheet" href="/stylesheets/race_records.css" />
+</head>
+<body>
+<div class="topnav web-nav" id="topnav">
+</div>
+<div class="topnav mobile-nav" id="topnav-mob">
+  <div id="my-links"></div>
+</div>
+
+<h1>Live Racer Positions</h1>
+
+<div class="top-racers">
+  <div class="racer-card">
+    <div class="position">1st</div>
+    <div class="racer-name">Racer A</div>
+    <div class="lap">Lap 5/10</div>
+  </div>
+  <div class="racer-card">
+    <div class="position">2nd</div>
+    <div class="racer-name">Racer B</div>
+    <div class="lap">Lap 5/10</div>
+  </div>
+  <div class="racer-card">
+    <div class="position">3rd</div>
+    <div class="racer-name">Racer C</div>
+    <div class="lap">Lap 4/10</div>
+  </div>
+</div>
+
+<div class="rest-container">
+  <div class="rest-racer">
+    <div class="rest-position">4th</div>
+    <div class="rest-name">Racer D</div>
+    <div class="rest-lap">Lap 4/10</div>
+  </div>
+  <div class="rest-racer">
+    <div class="rest-position">5th</div>
+    <div class="rest-name">Racer E</div>
+    <div class="rest-lap">Lap 4/10</div>
+  </div>
+  <div class="rest-racer">
+    <div class="rest-position">6th</div>
+    <div class="rest-name">Racer F</div>
+    <div class="rest-lap">Lap 3/10</div>
+  </div>
+  <!-- Add more as needed -->
+</div>
+<script>
+
+  document.addEventListener('DOMContentLoaded', () => {
+    addMenus();
+    initialLoad();
+  });
+
+  const isMobile = document.getElementById("topnav-mob").checkVisibility();
+  let topNav = isMobile ? document.getElementById("my-links")
+          : document.getElementById("topnav");
+  const myLinks = document.getElementById("my-links");
+
+  function initialLoad(){
+    let firstLoad = true;
+    for(let i = 0; i < topNav.children.length; i++){
+      if(topNav.children[i].classList.contains('active')){
+        firstLoad = false;
+      }
+    }
+    if(firstLoad){
+      let selectedPage = 0;
+      console.log('firstLoad', topNav.children[selectedPage] === undefined, topNav.children[selectedPage]);
+      selectedTabId = topNav.children[selectedPage] === undefined ? 0 : topNav.children[selectedPage].id;
+      topNav.children[selectedPage].className = "active";
+    }
+    if(isMobile){
+      myLinks.style.display = "none";
+    }
+  }
+
+  function addMenus(){
+    let btnMenu = document.createElement(isMobile ? 'a': 'button');
+    btnMenu.textContent = 'Home';
+    btnMenu.id = 'home'
+    btnMenu.onclick = () => {
+      window.location.replace( '/');
+    }
+    topNav.appendChild(btnMenu);
+  }
+
+</script>
+</body>
+</html>

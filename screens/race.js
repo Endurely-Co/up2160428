@@ -22,4 +22,8 @@ router.get('/record-race', (req, res) => {
     res.render('race_recorder', { title: 'Race Board' });
 });
 
+router.get('/race-records', (req, res) => {
+    res.render('race_records', { title: 'Race Records' });
+});
+
 export default router;

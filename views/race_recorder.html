@@ -16,7 +16,6 @@
 </div>
 <div class="topnav mobile-nav" id="topnav-mob">
   <div id="my-links"></div>
-
 </div>
 
 <div  class="timer-container">
@@ -45,11 +44,11 @@
 <div class="toast" id="toast"></div>
 <script>
 
-  const isMobile = document.getElementById("topnav-mob").checkVisibility()
-  const racePositionSelector = document.getElementById('position-select');
-  const laps = document.getElementById('laps');
+  const isMobile = document.getElementById("topnav-mob").checkVisibility();
   let topNav = isMobile ? document.getElementById("my-links")
           : document.getElementById("topnav");
+  const racePositionSelector = document.getElementById('position-select');
+  const laps = document.getElementById('laps');
   const racerSelect = document.getElementById('racer-select');
   const raceForm = document.getElementById('record-race-form');
   const myLinks = document.getElementById("my-links");

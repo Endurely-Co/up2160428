@@ -62,7 +62,7 @@ router.post('/suggest-racers', async (req, res) => {
     }
 });
 
-// getAllRacePosition
+/// Get all participants in the race
 router.get('/all-racer-board', async (req, res) => {
     const racers = await db.getAllRacePosition();
     return res.status(200).json(racers);
@@ -157,7 +157,7 @@ router.post('/record-laps', async (req, res) => {
     return res.status(200).json(raceLaps);
 });
 
-router.get('/laps', async (req, res) => {
+router.get('/records', async (req, res) => {
     const racerPosition = await db.getNewLaps();
     return res.status(200).json(racerPosition);
 });
