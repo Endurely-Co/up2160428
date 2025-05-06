@@ -12,6 +12,12 @@
 
 
 <body>
+<div class="topnav web-nav" id="topnav">
+</div>
+<div class="topnav mobile-nav" id="topnav-mob">
+  <div id="my-links"></div>
+
+</div>
 
 <div  class="timer-container">
 <h2>Record Race</h2>
@@ -23,7 +29,6 @@
 
     <label for="laps"><b>Laps</b></label>
     <input type="text" placeholder="Lapse" id="laps" name="laps" required disabled>
-
 
     <label for="racer-select"><b>Select race position:</b></label>
     <select name="pets" id="racer-select"></select>
@@ -38,10 +43,15 @@
 </div>
 <script>
 
+  const isMobile = document.getElementById("topnav-mob").checkVisibility()
   const racePositionSelector = document.getElementById('position-select');
   const laps = document.getElementById('laps');
+  let topNav = isMobile ? document.getElementById("my-links")
+          : document.getElementById("topnav");
   const racerSelect = document.getElementById('racer-select');
   const raceForm = document.getElementById('record-race-form');
+  const myLinks = document.getElementById("my-links");
+  let distinctText = undefined;
 
   const LAPS = 'laps';
   let raceLaps = undefined;
@@ -58,20 +68,55 @@
     raceId = JSON.parse(recordedLaps)['race_id'];
     raceLaps = rLaps;
     laps.value = `${rLaps.length} Laps`;
+
+    // show menu
+    addMenus();
+    initialLoad();
   });
+
+
+  function initialLoad(){
+    let firstLoad = true;
+    for(let i = 0; i < topNav.children.length; i++){
+      if(topNav.children[i].classList.contains('active')){
+        firstLoad = false;
+      }
+    }
+    if(firstLoad){
+      let selectedPage = 0;
+      console.log('firstLoad', topNav.children[selectedPage] === undefined, topNav.children[selectedPage]);
+      selectedTabId = topNav.children[selectedPage] === undefined ? 0 : topNav.children[selectedPage].id;
+      topNav.children[selectedPage].className = "active";
+    }
+    if(isMobile){
+      myLinks.style.display = "none";
+    }
+  }
+
+
+  function addMenus(){
+    let btnMenu = document.createElement(isMobile ? 'a': 'button');
+    btnMenu.textContent = 'Home';
+    btnMenu.id = 'home'
+    btnMenu.onclick = () => {
+      window.location.href = '/';
+    }
+    topNav.appendChild(btnMenu);
+  }
 
   raceForm.addEventListener('submit', (e) => {
     e.preventDefault();
-
-    console.log('position_position', {
-      lap: raceLaps,
-      position: racePositionSelector.value,
-      racer_id: racerSelect.value,
-      race_id: raceId,
-    });
     recordLabs()
   });
 
+
+  function openMenu() {
+    if (myLinks.style.display === "block") {
+      myLinks.style.display = "none";
+    } else {
+      myLinks.style.display = "block";
+    }
+  }
 
   function recordLabs(){
     if (raceLaps === undefined) return;
@@ -89,7 +134,9 @@
     }).then((response) => {
       return response.json();
     }).then((data) =>{
-      console.log(data);
+      if(distinctText === data.message){
+        showToast(data.message, 'success');
+      }
     });
   }
 

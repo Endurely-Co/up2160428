@@ -41,7 +41,6 @@
     let raceLapseData = []
     // const lapseTemplate = document.getElementById("template");
 
-    // let lapses = [];
     let intervalId;
     let startedTime = null;
     let elapsedTime =0;
@@ -50,12 +49,41 @@
     const startText = 'Start';
     let lapCount = 0;
     let raceId = undefined;
+    let prevSocCommand = undefined;
+    let cachedLaps = 'cachedLaps';
+
+    const socket = new WebSocket(`ws://${location.hostname}:8081`);
 
     lapseBtn.addEventListener('click', addNewLapse);
     submitLapsBtn.addEventListener('click', submitLaps);
-    stopBtn.addEventListener('click', stopTimer);
+
     populateCurrentRace();
-    getStartTime();
+    doInitialStartTime();
+    populateLaps();
+
+    socket.addEventListener('open', (event) =>{
+      console.log('websocket connection open!');
+    });
+
+    socket.addEventListener('message', (event) =>{
+      const cmdObj = JSON.parse(event.data);
+      console.log('websocket connection open! ---> ' + cmdObj.elapse_time);
+      if (cmdObj.elapse_time !== undefined) {
+        elapsedTime = cmdObj.elapse_time;
+      }
+      if (prevSocCommand !== cmdObj.cmd){
+        if (cmdObj.cmd === 'start') {
+          startTimer();
+        }else if (cmdObj.cmd === 'pause') {
+          pauseTimer();
+        }else{
+          stopTimer();
+        }
+        prevSocCommand = cmdObj.cmd;
+        localStorage.setItem('timer_status', 'running');
+      }
+
+    });
 
     function submitLaps(){
       // submit laps
@@ -69,14 +97,34 @@
       window.location.href = '/record-race';
     }
 
-    function addNewLapse(event){
-      if (isRunning){
+    function populateLaps(){
+      const laps = JSON.parse(localStorage.getItem(cachedLaps));
+      console.log('lap001 ---->', laps);
+      if(laps){
+        laps.cached.forEach((lap) => {
+          console.log('lap ---->', lap);
+          addNewLapse(null, lap);
+        });
+      }
+
+      console.log('laps', laps);
+    }
+
+    function addNewLapse(event, cachedLap = undefined){
+      console.log('lap ---->', isRunning, cachedLap ? true : false);
+      if (isRunning || cachedLap){
         lapCount += 1;
         let li = document.createElement('li');
         li.className = 'rounded-list';
-        li.appendChild(document.createTextNode(`Lap ${lapCount}: ` + timer.textContent));
+        li.appendChild(document.createTextNode(`Lap ${lapCount}: ` + (cachedLap ? cachedLap : timer.textContent)));
         lapsesNode.appendChild(li);
         raceLapseData.push(timer.textContent);
+        if(cachedLap === undefined){
+          console.log('lap ---->>', isRunning, cachedLaps);
+          localStorage.setItem(cachedLaps, JSON.stringify({
+            cached: raceLapseData
+          }));
+        }
       }
     }
 
@@ -88,7 +136,7 @@
         clearInterval(intervalId);
         intervalId = null;
         elapsedTime = nowTime - startedTime;
-        updateStartTime(nowTime);
+        updateStartTime(nowTime, true);
         console.log("pause", clockNow);
         isRunning = false;
       }
@@ -107,7 +155,7 @@
     }
 
     function enableSubmitBtn(){
-      submitLapsBtn.disabled = false;
+      submitLapsBtn.disabled = raceLapseData.length === 0;
     }
 
 
@@ -115,16 +163,20 @@
       if(!isRunning && !intervalId){
         let nowTime = Date.now();
         //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
-        updateStartTime(nowTime); // Query time and start
+        updateStartTime(nowTime, false); // Query time and start
         startedTime = nowTime  - elapsedTime;
-        intervalId = setInterval(updateClock, 10)
-        startBtn.textContent = "Pause"
+        intervalId = setInterval(updateClock, 10);
+        startBtn.textContent = "Pause";
         isRunning = true;
         disableSubmitBtn();
       }
     }
 
-    function updateStartTime(startTime){
+    function sendCommand(cmd){
+      socket.send(JSON.stringify({cmd: cmd, elapse_time: elapsedTime}));
+    }
+
+    function updateStartTime(startTime, pause){
       // TODO: Add timer state(start, pause, stop)
       fetch('/api/start-race', {
         method: 'PUT',
@@ -132,7 +184,8 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          start_time: startTime
+          start_time: startTime,
+          pause: pause
         })
       }).then((res) => {
         return res.json();
@@ -186,7 +239,7 @@
       });
     }
 
-    function getStartTime(){
+    function doInitialStartTime(){
       fetch('/api/start-time', {
         headers: {
           'Content-Type': 'application/json',
@@ -195,16 +248,27 @@
       }).then(function(response) {
         return response.json();
       }).then(function(startTime) {
-        if (startTime.start_time.start_time.split('-')[0] === 'NaN') return;
-        //race.start_time.start_time
-        let nowTime = new Date(startTime.start_time.start_time).getTime();
-        console.log("nowTime", nowTime, startTime.start_time.start_time);
-        //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
-        updateStartTime(nowTime); // Query time and start
-        startedTime = nowTime  - elapsedTime;
-        intervalId = setInterval(updateClock, 10)
-        startBtn.textContent = "Pause"
-        isRunning = true;
+
+        if (startTime.start_time.split('-')[0] === 'NaN'
+                || startTime.start_time.split(':')[startTime.start_time.length -1] === '00') return;
+
+        console.log('race_started ------>', startTime.race_started)
+        if(startTime.race_started === 0){
+          // race is paused
+          pauseTimer();
+        }else if(startTime.race_started === 1){
+          //startBtn.textContent = "Pause"
+
+          //race.start_time.start_time
+          let nowTime = new Date(startTime.start_time).getTime();
+          console.log("nowTime", nowTime, startTime.start_time);
+          //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
+          updateStartTime(nowTime, false); // Query time and start
+          startedTime = nowTime  - elapsedTime;
+          intervalId = setInterval(updateClock, 10);
+          startBtn.textContent = "Pause";
+          isRunning = true;
+        }
 
       }).catch((error) => {
         console.log('error', error);
@@ -213,26 +277,6 @@
 
     const formData = {};
 
-    monitorUserPosition();
-
-
-    async function monitorUserPosition() {
-
-      if (localStorage.getItem('user_type') === 'runner') {
-
-        const options = {
-          enableHighAccuracy: true,
-          timeout: 2000,
-          maximumAge: 0
-        }
-
-        navigator.geolocation.watchPosition(success, error, options);
-      }
-    }
-
-    function updateLocation() {
-      navigator.geolocation.getCurrentPosition(success, error)
-    }
 
     function stopTimer() {
       startBtn.textContent = startText
@@ -243,7 +287,6 @@
       intervalId = null;
       updateEndTime(endTime);
       updateClock(true);
-      localStorage.setItem('timer_status', 'stopped');
       enableSubmitBtn();
     }
 
@@ -313,15 +356,19 @@
     };
 
     startBtn.addEventListener('click', async () =>{
+
       localStorage.setItem('timer_status', 'running');
-      console.log('start');
+      // console.log('start');
       if([startText, 'Resume'].includes(startBtn.textContent)){
-        await startTimer();
+        sendCommand('start');
       }else{
-        pauseTimer();
+        sendCommand('pause');
       }
     });
 
+    stopBtn.addEventListener('click', () =>{
+      sendCommand('stop');
+    });
 
 
     function showToast(message, type){
@@ -338,6 +385,8 @@
       }, 3000);
     }
 
+  }else{
+    console.log('error', 'loaded');
   }
 
 </script>

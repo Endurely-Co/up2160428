@@ -12,14 +12,15 @@
     }
 
     .topnav {
+        width: 100%;
         overflow: hidden;
         background-color: #333;
         position: relative;
     }
 
     .topnav #my-links {
-        display: none;
-        max-height: 160px;
+        display: block;
+        height: fit-content;
     }
 
     .topnav a {

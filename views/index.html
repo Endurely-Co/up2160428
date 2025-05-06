@@ -12,7 +12,7 @@
     <title id="page-title">Current Race</title>
 
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#yourColor">
+<!--    <meta name="theme-color" content="#yourColor">-->
 
 </head>
 <body>
@@ -27,7 +27,7 @@
 <div class="topnav mobile-nav" id="topnav-mob">
     <div id="my-links"></div>
     <a href="javascript:void(0);" onclick="doLogOut()" id="mob-logout">Logout</a>
-    <a href="javascript:void(0);" class="icon" onclick="myFunction()">
+    <a href="javascript:void(0);" class="icon" onclick="openMenu()">
         <i class="fa fa-bars"></i>
     </a>
 </div>
@@ -52,15 +52,16 @@
 
     let currentPage = undefined;
 
-    function myFunction() {
-        if (myLinks.style.display === "block") {
-            myLinks.style.display = "none";
-            mobLogout.style.display = 'none';
-        } else {
-            mobLogout.style.display = 'block';
-            myLinks.style.display = "block";
-        }
-    }
+    // function openMenu() {
+    //     if (myLinks.style.display === "block") {
+    //         topNav.style.display = "block";
+    //         myLinks.style.display = "none";
+    //         mobLogout.style.display = 'none';
+    //     } else {
+    //         mobLogout.style.display = 'block';
+    //         myLinks.style.display = "block";
+    //     }
+    // }
 
     function showToast(message, type){
         toast.textContent = message;
@@ -132,8 +133,9 @@
             topNav.children[selectedPage].className = "active";
         }
         if(isMobile){
+            topNav.style.display = "block";
             mobLogout.style.display = 'none';
-            myLinks.style.display = "none";
+            myLinks.style.display = "block";
         }
     }
 
@@ -143,23 +145,12 @@
             topNav.children[i].addEventListener('click', function(event){
                 if(selectedTabId !== topNav.children[i].id){
 
-                    // Prevent user from moving to over page until race is completed
-                    const timerStatus = localStorage.getItem('timer_status');
-
-                    if (timerStatus === 'running'){
-                        showToast("Race has started! You can't navigate from this page until race is completed");
-                        return;
-                    }
 
                     if(selectedTabId !== undefined){
                         document.getElementById(selectedTabId)
                             .classList.remove('active');
                     }
 
-                    // Remove status as state is not running
-                    if(timerStatus){
-                        localStorage.removeItem('timer_status');
-                    }
 
                     topNav.children[i].className = "active";
                     localStorage.setItem(SELECTED_PAGE_KEY, `${i}`);

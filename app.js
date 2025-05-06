@@ -6,6 +6,7 @@ import injectApi from './api/injector.js';
 import injectScreen from './screens/injector.js';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import connectToWebSocket from "./api/race_cmd_socket.js";
 
 let app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +28,9 @@ function viewEngine(filePath, options, callback){
         return callback(null, content);
     });
 }
+
+// connect to time command socket
+connectToWebSocket()
 
 // Inject dependencies
 await injectApi(app);

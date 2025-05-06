@@ -4,15 +4,17 @@ import cache from "./cache.js";
 
 const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?, ?)`;
 
+// race_started is used for start and pause race
+// race_started True means the race is still running False is the race has been paused.
 const updateRaceStart = `UPDATE race SET race_started = ?, start_time = ? WHERE id = ?`
 
-const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE id = ?`
+const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ?, race_started = ? WHERE id = ?`
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const allRaces = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
-const queryStartTime = `SELECT start_time FROM race ORDER BY start_time`;
+const queryStartTime = `SELECT start_time, race_started FROM race ORDER BY start_time`;
 
 const queryRaceId = `SELECT id FROM race ORDER BY start_time DESC LIMIT 1`;
 
@@ -87,11 +89,11 @@ async function getRacers(){
 
 
 // TODO: Refactor later on
-async function updateStartRace(startTime){
+async function updateStartRace(startTime, isPaused){
     try {
         const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceStart);
-        updateRace.run(1, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
+        updateRace.run(isPaused ? 0 : 1, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
         return {
             message: 'Race started'
         };
@@ -105,8 +107,11 @@ async function updateStartRace(startTime){
 async function getRaceStartTime(){
     //database.prepare(`DELETE FROM race WHERE start_time != null`);
     const startTime = await database.prepare(queryStartTime);
+    console.log('race_started_race_started', startTime.all());
+
     return {
-        start_time: startTime.all()[0]
+        start_time: startTime.all()[0].start_time,
+        race_started: startTime.all()[0].race_started
     }
 }
 
@@ -124,7 +129,9 @@ async function updateEndRace(endTime){
     try {
         const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceEnd);
-        updateRace.run(0, isoToSQLiteDatetime(endTime), raceById.all()[0].id);
+        // reset the start race '1970-01-01 01:00:00'
+        updateRace.run(0, isoToSQLiteDatetime(endTime),
+            '1970-01-01 00:00:00', raceById.all()[0].id);
         return {
             message: 'Race ended'
         };

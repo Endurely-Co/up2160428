@@ -74,8 +74,9 @@ router.get('/start-time', async (req, res) => {
 })
 
 router.put('/start-race', async (req, res) => {
-    const {start_time} = req.body;
-    const startedRace = await db.updateStartRace( start_time); // req.params.id
+    const {start_time, pause} = req.body;
+
+    const startedRace = await db.updateStartRace( start_time, pause); // req.params.id
     if (startedRace.error || start_time === undefined){
         return res.status(400).json(startedRace);
     }
