@@ -102,9 +102,11 @@
       console.log('lap001 ---->', laps);
       if(laps){
         laps.cached.forEach((lap) => {
-          console.log('lap ---->', lap);
           addNewLapse(null, lap);
         });
+        if(laps.cached.length > 0){
+          enableSubmitBtn();
+        }
       }
 
       console.log('laps', laps);

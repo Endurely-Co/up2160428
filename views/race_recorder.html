@@ -41,6 +41,8 @@
 
 </form>
 </div>
+
+<div class="toast" id="toast"></div>
 <script>
 
   const isMobile = document.getElementById("topnav-mob").checkVisibility()
@@ -135,9 +137,24 @@
       return response.json();
     }).then((data) =>{
       if(distinctText === data.message){
-        showToast(data.message, 'success');
+        window.location.replace('/');
+        localStorage.removeItem('cachedLaps');
       }
     });
+  }
+
+  function showToast(message, type){
+    toast.textContent = message;
+    if(type === 'success'){
+      toast.style.backgroundColor = 'green';
+    }else{
+      toast.style.backgroundColor = 'red';
+    }
+    toast.className = 'toast show';
+
+    setTimeout((event) => {
+      toast.className = 'toast';
+    }, 3000);
   }
 
   function getRacers(){
