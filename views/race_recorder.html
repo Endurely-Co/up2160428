@@ -7,6 +7,8 @@
   <link rel='stylesheet' href='/stylesheets/login.css' />
   <link rel='stylesheet' href='/stylesheets/button.css' />
     <link rel="stylesheet" href="/stylesheets/race.css">
+  <link rel="stylesheet" href="/stylesheets/toast.css">
+
     <title>Title</title>
 </head>
 
@@ -24,10 +26,6 @@
 <form id="record-race-form">
 
   <div class="container">
-
-
-    <label for="laps"><b>Laps</b></label>
-    <input type="text" placeholder="Lapse" id="laps" name="laps" required disabled>
 
     <label for="racer-select"><b>Select race position:</b></label>
     <select name="pets" id="racer-select"></select>
@@ -48,27 +46,16 @@
   let topNav = isMobile ? document.getElementById("my-links")
           : document.getElementById("topnav");
   const racePositionSelector = document.getElementById('position-select');
-  const laps = document.getElementById('laps');
   const racerSelect = document.getElementById('racer-select');
   const raceForm = document.getElementById('record-race-form');
   const myLinks = document.getElementById("my-links");
   let distinctText = undefined;
 
-  const LAPS = 'laps';
-  let raceLaps = undefined;
   let raceId = undefined;
 
   document.addEventListener('DOMContentLoaded', () => {
     addRacePositions();
     getRacers();
-    const recordedLaps = localStorage.getItem(LAPS);
-    if (recordedLaps === null) {
-      return;
-    }
-    const rLaps = JSON.parse(recordedLaps)[LAPS];
-    raceId = JSON.parse(recordedLaps)['race_id'];
-    raceLaps = rLaps;
-    laps.value = `${rLaps.length} Laps`;
 
     // show menu
     addMenus();
@@ -119,28 +106,7 @@
     }
   }
 
-  function recordLabs(){
-    if (raceLaps === undefined) return;
-    fetch('/api/record-laps', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        laps: raceLaps,
-        position: racePositionSelector.value,
-        racer_id: racerSelect.value,
-        race_id: raceId,
-      })
-    }).then((response) => {
-      return response.json();
-    }).then((data) =>{
-      if(distinctText === data.message){
-        window.location.replace('/');
-        localStorage.removeItem('cachedLaps');
-      }
-    });
-  }
+
 
   function showToast(message, type){
     toast.textContent = message;
@@ -154,6 +120,28 @@
     setTimeout((event) => {
       toast.className = 'toast';
     }, 3000);
+  }
+
+  function recordLabs(){
+    fetch('/api/record-laps', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        position: racePositionSelector.value,
+        racer_id: racerSelect.value,
+        race_id: raceId,
+      })
+    }).then((response) => {
+      return response.json();
+    }).then((data) =>{
+      if(distinctText === data.message){
+        showToast('Runner added successfully', 'success');
+        // window.location.replace('/');
+        // localStorage.removeItem('cachedLaps');
+      }
+    });
   }
 
   function getRacers(){

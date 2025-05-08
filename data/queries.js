@@ -42,6 +42,8 @@ const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type, race_id`;
 
+const queryRacerId = `SELECT race_id FROM race WHERE email = ?`;
+
 const queryRaceNum = `SELECT race_id FROM user WHERE race_id IS NOT NULL ORDER BY race_id DESC LIMIT 1`;
 
 const insertRacerPosition = `INSERT OR REPLACE INTO racer_position(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
@@ -89,11 +91,11 @@ async function getRacers(){
 
 
 // TODO: Refactor later on
-async function updateStartRace(startTime, isPaused){
+async function updateStartRace(startTime, started){
     try {
         const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceStart);
-        updateRace.run(isPaused ? 0 : 1, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
+        updateRace.run(started ? 1 : 0, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
         return {
             message: 'Race started'
         };
@@ -213,6 +215,7 @@ async function requestAllRace(){
 
  async function requestLatestRace(){
     const recent = await database.prepare(latestRace);
+     //const user = await database.prepare(queryRacerId);
     return recent.all().length === 0 ? [] : [recent.all()[0]];
 }
 

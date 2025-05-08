@@ -4,7 +4,7 @@ const paths = [
     './race.js'
 ];
 
-// Inject all api screens
+// Inject all api
 async function inject(app){
     const resolvePaths = await Promise.all(paths.map(path => import(path)));
     resolvePaths.forEach(path => {

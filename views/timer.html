@@ -3,6 +3,8 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %></title>
+  <link rel="stylesheet" href="/stylesheets/confirmation_snackbar.css">
+  <link rel="stylesheet" href="/stylesheets/button.css">
 </head>
 <body>
 
@@ -11,31 +13,34 @@
   <p class="timer" id="timer">00:00:00.000</p>
   <div class="controls" id="controls">
     <button id="startPause" type="button" class="ctr-button start">Start</button>
-    <button id="lapse" type="button" class="ctr-button lap">Lapse</button>
-    <button id="stop" type="button" class="ctr-button stop">Stop</button>
+<!--    <button id="lapse" type="button" class="ctr-button lap">Lapse</button>-->
+<!--    <button id="stop" type="button" class="ctr-button stop">Stop</button>-->
   </div>
   <div id="lapses-container"></div>
   <div>
     <ul id="lapses"></ul>
   </div>
-  <button type="submit" class="def-button" id="submit-laps-btn" disabled>Submit Laps</button>
-
 </div>
 
 <div class="toast" id="toast"></div>
 
+<div id="snackbar">Are you sure you want to finish the race? <button id="finish-btn" class="def-button"><b>Confirm</b></button></div>
 <script>
   // To prevent Uncaught SyntaxError: redeclaration of const
   if (document.readyState !== "loading") {
     const toast = document.getElementById('toast');
     const startBtn = document.getElementById('startPause');
-    const stopBtn = document.getElementById('stop');
-    const lapseBtn = document.getElementById('lapse');
+    // const stopBtn = document.getElementById('stop');
+    // const lapseBtn = document.getElementById('lapse');
     const timer = document.getElementById('timer');
     const lapsesNode = document.getElementById('lapses');
     const topNav = document.getElementById('topnav');
     const controls = document.getElementById('controls');
-    const submitLapsBtn = document.getElementById('submit-laps-btn');
+    const snackbar = document.getElementById("snackbar");
+    const finishBtn = document.getElementById('finish-btn');
+
+
+    //const submitLapsBtn = document.getElementById('submit-laps-btn');
 
     let endTime = undefined;
     let raceLapseData = []
@@ -54,8 +59,8 @@
 
     const socket = new WebSocket(`ws://${location.hostname}:8081`);
 
-    lapseBtn.addEventListener('click', addNewLapse);
-    submitLapsBtn.addEventListener('click', submitLaps);
+    // lapseBtn.addEventListener('click', addNewLapse);
+    //submitLapsBtn.addEventListener('click', submitLaps);
 
     populateCurrentRace();
     doInitialStartTime();
@@ -65,25 +70,40 @@
       console.log('websocket connection open!');
     });
 
+    finishBtn.addEventListener('click', (_) => {
+      stopTimer();
+      snackbar.className = "";
+      submitLaps();
+    });
+
     socket.addEventListener('message', (event) =>{
       const cmdObj = JSON.parse(event.data);
-      console.log('websocket connection open! ---> ' + cmdObj.elapse_time);
       if (cmdObj.elapse_time !== undefined) {
         elapsedTime = cmdObj.elapse_time;
       }
       if (prevSocCommand !== cmdObj.cmd){
         if (cmdObj.cmd === 'start') {
           startTimer();
-        }else if (cmdObj.cmd === 'pause') {
-          pauseTimer();
+          prevSocCommand = cmdObj.cmd;
+          localStorage.setItem('timer_status', 'running');
         }else{
-          stopTimer();
+          console.log('websocket connection open! ---> showWarning');
+          showWarning();
+          prevSocCommand =''
         }
-        prevSocCommand = cmdObj.cmd;
-        localStorage.setItem('timer_status', 'running');
       }
 
     });
+
+    function showWarning(){
+      snackbar.className = "show";
+      const timeout = setTimeout(function(){
+        snackbar.className = "";
+        clearTimeout(timeout)
+        }, 3000);
+    }
+
+
 
     function submitLaps(){
       // submit laps
@@ -99,65 +119,14 @@
 
     function populateLaps(){
       const laps = JSON.parse(localStorage.getItem(cachedLaps));
-      console.log('lap001 ---->', laps);
-      if(laps){
-        laps.cached.forEach((lap) => {
-          addNewLapse(null, lap);
-        });
-        if(laps.cached.length > 0){
-          enableSubmitBtn();
-        }
-      }
-
-      console.log('laps', laps);
-    }
-
-    function addNewLapse(event, cachedLap = undefined){
-      console.log('lap ---->', isRunning, cachedLap ? true : false);
-      if (isRunning || cachedLap){
-        lapCount += 1;
-        let li = document.createElement('li');
-        li.className = 'rounded-list';
-        li.appendChild(document.createTextNode(`Lap ${lapCount}: ` + (cachedLap ? cachedLap : timer.textContent)));
-        lapsesNode.appendChild(li);
-        raceLapseData.push(timer.textContent);
-        if(cachedLap === undefined){
-          console.log('lap ---->>', isRunning, cachedLaps);
-          localStorage.setItem(cachedLaps, JSON.stringify({
-            cached: raceLapseData
-          }));
-        }
-      }
     }
 
 
-    function pauseTimer() {
-      if(isRunning && intervalId){
-        const nowTime = Date.now();
-        startBtn.textContent = "Resume";
-        clearInterval(intervalId);
-        intervalId = null;
-        elapsedTime = nowTime - startedTime;
-        updateStartTime(nowTime, true);
-        console.log("pause", clockNow);
-        isRunning = false;
-      }
-    }
 
     const userTypeVal = localStorage.getItem('user_type');
     console.log('userTypeVal', userTypeVal);
     if(userTypeVal !== 'organiser'){
       controls.className = 'controls hide';
-      submitLapsBtn.style.visibility = 'hidden';
-    }
-
-
-    function disableSubmitBtn(){
-      submitLapsBtn.disabled = true;
-    }
-
-    function enableSubmitBtn(){
-      submitLapsBtn.disabled = raceLapseData.length === 0;
     }
 
 
@@ -165,12 +134,11 @@
       if(!isRunning && !intervalId){
         let nowTime = Date.now();
         //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
-        updateStartTime(nowTime, false); // Query time and start
+        updateStartTime(nowTime); // Query time and start
         startedTime = nowTime  - elapsedTime;
         intervalId = setInterval(updateClock, 10);
-        startBtn.textContent = "Pause";
+        startBtn.textContent = "Finish";
         isRunning = true;
-        disableSubmitBtn();
       }
     }
 
@@ -178,7 +146,7 @@
       socket.send(JSON.stringify({cmd: cmd, elapse_time: elapsedTime}));
     }
 
-    function updateStartTime(startTime, pause){
+    function updateStartTime(startTime){
       // TODO: Add timer state(start, pause, stop)
       fetch('/api/start-race', {
         method: 'PUT',
@@ -187,7 +155,7 @@
         },
         body: JSON.stringify({
           start_time: startTime,
-          pause: pause
+          started: true
         })
       }).then((res) => {
         return res.json();
@@ -255,20 +223,16 @@
                 || startTime.start_time.split(':')[startTime.start_time.length -1] === '00') return;
 
         console.log('race_started ------>', startTime.race_started)
-        if(startTime.race_started === 0){
-          // race is paused
-          pauseTimer();
-        }else if(startTime.race_started === 1){
-          //startBtn.textContent = "Pause"
+        if(startTime.race_started === 1){
+          startBtn.textContent = "Finish"
 
           //race.start_time.start_time
           let nowTime = new Date(startTime.start_time).getTime();
           console.log("nowTime", nowTime, startTime.start_time);
           //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
-          updateStartTime(nowTime, false); // Query time and start
+          updateStartTime(nowTime); // Query time and start
           startedTime = nowTime  - elapsedTime;
           intervalId = setInterval(updateClock, 10);
-          startBtn.textContent = "Pause";
           isRunning = true;
         }
 
@@ -283,13 +247,12 @@
     function stopTimer() {
       startBtn.textContent = startText
       clearInterval(intervalId);
-      elapsedTime = 0;
-      startedTime =0;
+      // elapsedTime = 0;
+      // startedTime =0;
       isRunning = false;
       intervalId = null;
       updateEndTime(endTime);
       updateClock(true);
-      enableSubmitBtn();
     }
 
 
@@ -361,16 +324,16 @@
 
       localStorage.setItem('timer_status', 'running');
       // console.log('start');
-      if([startText, 'Resume'].includes(startBtn.textContent)){
+      if([startText].includes(startBtn.textContent)){
         sendCommand('start');
       }else{
-        sendCommand('pause');
+        sendCommand('stop');
       }
     });
 
-    stopBtn.addEventListener('click', () =>{
-      sendCommand('stop');
-    });
+    // stopBtn.addEventListener('click', () =>{
+    //   sendCommand('stop');
+    // });
 
 
     function showToast(message, type){

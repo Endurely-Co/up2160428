@@ -16,7 +16,7 @@
 
 </head>
 <body>
-
+<connection-status></connection-status>
 <div class="topnav web-nav" id="topnav">
     <div  style="float: right;
      margin-right: 10px;">
@@ -35,6 +35,7 @@
 <div id="content">
 </div>
 <div id="toast" class="toast"></div>
+
 <script>
     const isMobile = document.getElementById("topnav-mob").checkVisibility()
     let topNav = isMobile ? document.getElementById("my-links")
@@ -51,17 +52,6 @@
     let START_TAB = isMobile ? 0 : 1
 
     let currentPage = undefined;
-
-    // function openMenu() {
-    //     if (myLinks.style.display === "block") {
-    //         topNav.style.display = "block";
-    //         myLinks.style.display = "none";
-    //         mobLogout.style.display = 'none';
-    //     } else {
-    //         mobLogout.style.display = 'block';
-    //         myLinks.style.display = "block";
-    //     }
-    // }
 
     function showToast(message, type){
         toast.textContent = message;
@@ -80,6 +70,7 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js');
     }
+
 
     function checkLogin(){
         fetch('/api/check-login', {
@@ -184,27 +175,6 @@
             });
     }
 
-
-    // function addMobileMenus(){
-    //     fetch('/api/user-type')
-    //         .then(response => response.json())
-    //         .then(menuObj => {
-    //             while (topNav.hasChildNodes() && topNav.children.length > START_TAB){
-    //                 topNav.removeChild(topNav.lastChild);
-    //             }
-    //
-    //             menuObj.menus.forEach(menu => {
-    //                 let aMenu = document.createElement('a');
-    //                 aMenu.textContent = menu.name;
-    //                 aMenu.id = menu.id
-    //                 aMenu.target = menu.page;
-    //                 topNav.appendChild(aMenu);
-    //             });
-    //
-    //             addMenuClick();
-    //             initialLoad();
-    //         });
-    // }
 
     function removeNode(content){
         while (content.hasChildNodes()){
