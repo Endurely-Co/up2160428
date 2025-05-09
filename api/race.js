@@ -15,8 +15,9 @@ router.get('/current-race', async (req, res) => {
     }
 });
 
-router.get('/user-type', async (req, res) => {
-    const userType = cache.getUserType();
+router.get('/user-type', async function userMenuByType(req, res) {
+    const userType = req.query.type;
+    console.log('userType_userType', userType);
     const response = {'menus': []};
     const timer = {id: 'stop-watch', name: 'Stop watch', page: 'timer'};
     let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'}
@@ -31,7 +32,7 @@ router.get('/user-type', async (req, res) => {
         menus.forEach((menu) => {
             response['menus'].push(menu)
         });
-    }else{
+    }else if(userType === 'organiser'){
         raceData['id'] = 'cur-race';
         raceData['name'] = 'Current Race';
         [timer,raceData,
@@ -104,8 +105,7 @@ router.post('/new-race', async (req, res) => {
 
 
 async function newRace(req, res){
-    const {name, loop_km, start_time, cutoff_time} = req.body;
-    const email = cache.getLogIn();
+    const {name, loop_km, start_time, cutoff_time, email} = req.body;
     console.log(req.body);
     try{
         const result = await db.createNewRace(email,
@@ -120,21 +120,22 @@ async function newRace(req, res){
     }
 }
 
-router.post('/racer-position', async (req, res) => {
-    if(cache.getUserType() === 'runner'){
-        const {latitude, longitude} = req.body;
-        const racer_id = await queries.getUserById();
-        const racerPosition = await db.updateRacerPosition(latitude, longitude,
-            racer_id);
-        return res.status(200).json(racerPosition);
-    }
-    return res.status(400).json({message: "User is not a runner"});
-});
+// router.post('/racer-position', async (req, res) => {
+//     if(cache.getUserType() === 'runner'){
+//         const {latitude, longitude} = req.body;
+//         const racer_id = await queries.getUserById(email);
+//         const racerPosition = await db.updateRacerPosition(latitude, longitude,
+//             racer_id);
+//         return res.status(200).json(racerPosition);
+//     }
+//     return res.status(400).json({message: "User is not a runner"});
+// });
 
 
 
 router.get('/registered-race', async (req, res) => {
-    const raceById = await db.getRegisteredRaceById();
+    const email = req.query.email;
+    const raceById = await db.getRegisteredRaceById(email);
     return res.status(200).send({
         registered: raceById !== undefined
     });
@@ -165,7 +166,7 @@ router.get('/records', async (req, res) => {
 
 router.post('/register-race', async (req, res) => {
     try{
-        const email = cache.getLogIn();
+        const {email} = req.body;
         const registerRace = await db.registerRace(email);
         return res.status(200).json(registerRace);
     }catch (error){

@@ -38,8 +38,13 @@
     const controls = document.getElementById('controls');
     const snackbar = document.getElementById("snackbar");
     const finishBtn = document.getElementById('finish-btn');
+    const userTypeVal = getCookie('user_type')//`email=${data.email}; user_type=${data.user_type}`;
 
-
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
     //const submitLapsBtn = document.getElementById('submit-laps-btn');
 
     let endTime = undefined;
@@ -64,16 +69,13 @@
 
     populateCurrentRace();
     doInitialStartTime();
-    populateLaps();
 
     socket.addEventListener('open', (event) =>{
       console.log('websocket connection open!');
     });
 
     finishBtn.addEventListener('click', (_) => {
-      stopTimer();
-      snackbar.className = "";
-      submitLaps();
+      sendCommand('stop');
     });
 
     socket.addEventListener('message', (event) =>{
@@ -85,11 +87,11 @@
         if (cmdObj.cmd === 'start') {
           startTimer();
           prevSocCommand = cmdObj.cmd;
-          localStorage.setItem('timer_status', 'running');
+          document.cookie = `timer_status=running`;
         }else{
           console.log('websocket connection open! ---> showWarning');
-          showWarning();
-          prevSocCommand =''
+          stopTimer();
+          prevSocCommand ='';
         }
       }
 
@@ -106,25 +108,15 @@
 
 
     function submitLaps(){
-      // submit laps
-      localStorage.setItem('laps', JSON.stringify({
-        laps: raceLapseData,
-        race_id: raceId
-      }));
       for (let i = 0; i < topNav.children.length; i++) {
         topNav.children[i].style.display = 'none';
       }
       window.location.href = '/record-race';
     }
 
-    function populateLaps(){
-      const laps = JSON.parse(localStorage.getItem(cachedLaps));
-    }
 
 
-
-    const userTypeVal = localStorage.getItem('user_type');
-    console.log('userTypeVal', userTypeVal);
+    console.log('userTypeVal', userTypeVal, document.cookie);
     if(userTypeVal !== 'organiser'){
       controls.className = 'controls hide';
     }
@@ -190,24 +182,24 @@
       showToast("Error talking to your gps: " + error.message);
     }
 
-    function success(position){
-      formData['longitude'] = position.coords.longitude;
-      formData["latitude"] = position.coords.latitude;
-
-      fetch('/api/racer-position', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      }).then(function(response) {
-        return response.json();
-      }).then(function(races) {
-        console.log('login_position', races);
-      }).catch(function(error) {
-        console.log(error);
-      });
-    }
+    // function success(position){
+    //   formData['longitude'] = position.coords.longitude;
+    //   formData["latitude"] = position.coords.latitude;
+    //
+    //   fetch('/api/racer-position', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(formData)
+    //   }).then(function(response) {
+    //     return response.json();
+    //   }).then(function(races) {
+    //     console.log('login_position', races);
+    //   }).catch(function(error) {
+    //     console.log(error);
+    //   });
+    // }
 
     function doInitialStartTime(){
       fetch('/api/start-time', {
@@ -247,8 +239,8 @@
     function stopTimer() {
       startBtn.textContent = startText
       clearInterval(intervalId);
-      // elapsedTime = 0;
-      // startedTime =0;
+      elapsedTime = 0;
+      startedTime =0;
       isRunning = false;
       intervalId = null;
       updateEndTime(endTime);
@@ -322,12 +314,13 @@
 
     startBtn.addEventListener('click', async () =>{
 
-      localStorage.setItem('timer_status', 'running');
+      document.cookie = `timer_status=running`;
+      //localStorage.setItem('timer_status', 'running');
       // console.log('start');
       if([startText].includes(startBtn.textContent)){
         sendCommand('start');
       }else{
-        sendCommand('stop');
+        showWarning();
       }
     });
 

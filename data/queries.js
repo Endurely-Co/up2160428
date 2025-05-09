@@ -1,5 +1,4 @@
 import database from "./model.js";
-import cache from "./cache.js";
 
 
 const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?, ?)`;
@@ -59,6 +58,8 @@ const queryRaceResults = `SELECT * FROM race_record ORDER BY runner_position ASC
 const insertNewLaps = `INSERT OR REPLACE INTO race_laps(racer_pos, laps_time, racer_id, race_id) VALUES (?, ?, ?, ?);`
 
 const queryNewLaps = `SELECT * FROM race_laps`;
+
+const queryUserType = `SELECT user_type FROM user WHERE email = ?`;
 
 
 async function setRaceResult(){
@@ -150,9 +151,9 @@ async function getRegisteredRaces(){
     return rRace;
 }
 
-async function getRegisteredRaceById(){
+async function getRegisteredRaceById(email){
     const registeredRaces = database.prepare(queryRegisteredRaceById);
-    const curUId = await getUserById();
+    const curUId = await getUserById(email);
     //const registeredRace = registeredRaces.get(curUId);
     return registeredRaces.get(curUId);
 }
@@ -260,8 +261,8 @@ async function createNewRace(email, name, cutoff_time, start_time,  loop_km){
     }
 }
 
-async function checkLoggedIn() {
-    const email = cache.getLogIn();
+async function checkLoggedIn(email) {
+    //const email = cache.getLogIn();
     console.log('new_data_email', email);
 
     if (email === null) {
@@ -299,25 +300,31 @@ async function createNewUser(email, name, userType){
     }
 }
 
-async function invalidateUser() {
-    const email = cache.getLogIn();
-    cache.clear();
+async function invalidateUser(email) {
+   // const email = cache.getLogIn();
+    //cache.clear();
     await changeUserStatus(email, false);
     return {
         message: 'User has been logged out'
     };
 }
 
+async function getUserType(email){
+    const query = database.prepare(queryUserType);
+    const userByEmails = query.get(email);
+    return userByEmails[0];
+}
 
-async function getUserById(){
+
+async function getUserById(email){
     const query = database.prepare(queryForUserIdByEmail);
-    const user = query.get(cache.getLogIn())
+    const user = query.get(email)
     return user.id;
 }
 
-async function getUserByEmail(){
+async function getUserByEmail(email){
     const query = await database.prepare(queryForUser);
-    const user = query.get(cache.getLogIn());
+    const user = query.get(email);
     return {
         name: user.name,
         email: user.email,
@@ -334,7 +341,7 @@ async function changeUserStatus(email, isLoggedIn = true){
     if (user !== undefined){
         const signUserIn = await database.prepare(updateUserLogin);
         signUserIn.get(isLoggedIn.toString(), email); // Update log in
-        cache.setLogIn(email);
+        //cache.setLogIn(email);
         return {
             id: user.id,
             name: user.name,

@@ -38,21 +38,29 @@ router.post('/create_user', async (req, res) => {
     }
 });
 
-router.get('/check-login', async (req, res) => {
+router.get('/check-login', async function checkLogin(req, res) {
     try{
-        const checkLogin = await db.checkLoggedIn();
+        const email = req.query.email;
+        const checkLogin = await db.checkLoggedIn(email);
         res.status(200).json(checkLogin);
     }catch (e) {
         res.status(500).send({ error: "Internal Server Error"  });
     }
 });
 
-router.get('user-type', async (req, res) => {
-    return res.status(200).json(await db.userType());
-})
+// Deprecated todo: to be removed
+// router.get('user-type', async (req, res) => {
+//     const email = req.query.email;
+//     console.log('userType', email);
+//     const userType = await db.getUserType(email);
+//     return res.status(200).json({
+//         user_type: userType,
+//     });
+// });
 
 router.get('/logout', async (req, res) => {
-    const signOut = await db.invalidateUser();
+    const email = req.query.email;
+    const signOut = await db.invalidateUser(email);
     signOut['redirect_url'] = '/login'
     res.status(200).json(signOut)
 });

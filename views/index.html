@@ -16,7 +16,7 @@
 
 </head>
 <body>
-<connection-status></connection-status>
+
 <div class="topnav web-nav" id="topnav">
     <div  style="float: right;
      margin-right: 10px;">
@@ -71,22 +71,33 @@
         navigator.serviceWorker.register('/service-worker.js');
     }
 
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    function getEmail(){
+        return getCookie('email');
+    }
 
     function checkLogin(){
-        fetch('/api/check-login', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }).then((res) => res.json())
-            .then((data) => {
-                const curPath = window.location.pathname;
-                if(data.redirect_url !== curPath){
-                    window.location.href = '/login';
-                }
-            }).catch((err) => {
-            console.log(err, 'error');
-        });
+        const email = getEmail();
+        console.log('email--------->', email);
+        // fetch(`/api/check-login?email=${email}`, {
+        //     method: 'GET',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        // }).then((res) => res.json())
+        //     .then((data) => {
+        //         const curPath = window.location.pathname;
+        //         if(data.redirect_url !== curPath){
+        //             window.location.href = '/login';
+        //         }
+        //     }).catch((err) => {
+        //     console.log(err, 'error');
+        // });
     }
 
 
@@ -96,10 +107,10 @@
         const message = localStorage.getItem('message');
         if(message){
             showToast(message, 'success');
-            localStorage.removeItem('message');
         }
 
-        const userTypeVal = localStorage.getItem('user_type');
+        const userTypeVal = getCookie('user_type');
+        console.log('userTypeVal', document.cookie);
         if(userTypeVal){
             const initial = userTypeVal.charAt(0).toUpperCase();
             userType.textContent = `${initial}${ userTypeVal.substring(1).toLowerCase()}`;
@@ -155,7 +166,8 @@
     }
 
     function addMenus(){
-        fetch('/api/user-type')
+        const email = getCookie('user_type');
+        fetch(`/api/user-type?type=${email}`)
         .then(response => response.json())
             .then(menuObj => {
                 while (topNav.hasChildNodes() && topNav.children.length > START_TAB){
@@ -201,11 +213,13 @@
     }
 
     function doLogOut(){
-        fetch('/api/logout')
+        const email = getEmail();
+        fetch(`/api/logout?email=${email}`)
             .then(response => response.json())
             .then(logoutRes =>{
-                window.location.href = '/login';
+                document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
                 localStorage.clear();
+                window.location.href = '/login';
             }).catch((error) =>{
             showToast(error, 'error');
         });
