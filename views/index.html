@@ -107,6 +107,7 @@
         const message = localStorage.getItem('message');
         if(message){
             showToast(message, 'success');
+            localStorage.removeItem('message');
         }
 
         const userTypeVal = getCookie('user_type');
@@ -166,10 +167,15 @@
     }
 
     function addMenus(){
-        const email = getCookie('user_type');
-        fetch(`/api/user-type?type=${email}`)
+        const email = getCookie('email');
+        const type = getCookie('user_type');
+        fetch(`/api/user-type?type=${type}&email=${email}`)
         .then(response => response.json())
             .then(menuObj => {
+                if (menuObj.error){
+                    window.location.replace('/login');
+                    return;
+                }
                 while (topNav.hasChildNodes() && topNav.children.length > START_TAB){
                     topNav.removeChild(topNav.lastChild);
                 }

@@ -12,10 +12,6 @@
     <input type="text" id="name" name="name" maxlength="100" required>
     <br><br>
 
-    <label for="loop_km">Loop Distance (km):</label>
-    <input type="number" id="loop_km" name="loop_km" step="0.01" required>
-    <br><br>
-
     <label for="start_time">Start Time:</label>
     <input type="datetime-local" id="start_time" name="start_time" required>
     <br><br>
@@ -80,9 +76,10 @@
             event.preventDefault();
             const formData = {
                 name: getValue('name'),
-                loop_km: getValue('loop_km'),
                 start_time: getValue('start_time'),
-                cutoff_time: getValue('cutoff_time')}
+                cutoff_time: getValue('cutoff_time'),
+                email: getCookie('email')
+            }
             createRace(formData);
         });
     }

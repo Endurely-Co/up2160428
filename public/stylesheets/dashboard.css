@@ -58,14 +58,19 @@
     background-color: green;
 }
 
-.ctr-button.stop{
-    background-color: red;
+.ctr-button.start:disabled{
+    background-color: #81C784;
+    cursor: not-allowed;
 }
 
-.ctr-button.lap{
-    background-color: yellow;
-    color: black;
-}
+/*.ctr-button.stop{*/
+/*    background-color: red;*/
+/*}*/
+
+/*.ctr-button.lap{*/
+/*    background-color: yellow;*/
+/*    color: black;*/
+/*}*/
 
 ul {
     list-style-type: none;

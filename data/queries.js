@@ -1,13 +1,15 @@
 import database from "./model.js";
 
 
-const newRace = `INSERT INTO race(name, loop_km, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?, ?)`;
+const newRace = `INSERT INTO race(name, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?)`;
 
 // race_started is used for start and pause race
 // race_started True means the race is still running False is the race has been paused.
-const updateRaceStart = `UPDATE race SET race_started = ?, start_time = ? WHERE id = ?`
+const updateRaceStart = `UPDATE race SET race_started = ?, start_time = ? WHERE id = ?`;
 
-const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ?, race_started = ? WHERE id = ?`
+const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE id = ?`;
+
+const queryRaceStatus = `SELECT race_started, start_time FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
@@ -21,7 +23,9 @@ const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
 const registerUser = `INSERT INTO registered_race(user_id, race_id) VALUES(?, ?)`;
 
-const queryRegisteredRaces = `SELECT * FROM registered_race`
+const queryRegisteredRaces = `SELECT * FROM registered_race`;
+
+const queryUserRaceRegistered = `SELECT * FROM registered_race WHERE user_id = ?`;
 
 const queryRegisteredRaceById = `SELECT * FROM registered_race WHERE user_id = ?`
 // const updateUserRace = `UPDATE race SET racer_id = ? WHERE id = ?`;
@@ -72,6 +76,14 @@ async function setRaceResult(){
     return (await database.prepare(queryRaceResults));
 }
 
+
+async function hasRegisteredForRace(email){
+    const registerRace = await database.prepare(queryUserRaceRegistered);
+    const userId = await getUserIdByEmail(email);
+    console.log('registerRace', registerRace.get(userId));
+    return registerRace.get(userId) !== undefined;
+}
+
 async function recordLaps(racerPos, lapsTime, racerId, raceId){
     const newLaps = await database.prepare(insertNewLaps);
     newLaps.run(racerPos, lapsTime, racerId, raceId);
@@ -111,10 +123,14 @@ async function getRaceStartTime(){
     //database.prepare(`DELETE FROM race WHERE start_time != null`);
     const startTime = await database.prepare(queryStartTime);
     console.log('race_started_race_started', startTime.all());
+    const startTimes = startTime.all();
 
+    if (startTimes.length ===0){
+        return {start_time: null, end_time: null};
+    }
     return {
-        start_time: startTime.all()[0].start_time,
-        race_started: startTime.all()[0].race_started
+        start_time: startTimes[0].start_time,
+        race_started: startTimes[0].race_started
     }
 }
 
@@ -133,8 +149,7 @@ async function updateEndRace(endTime){
         const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceEnd);
         // reset the start race '1970-01-01 01:00:00'
-        updateRace.run(0, isoToSQLiteDatetime(endTime),
-            '1970-01-01 00:00:00', raceById.all()[0].id);
+        updateRace.run(0, isoToSQLiteDatetime(endTime), raceById.all()[0].id);
         return {
             message: 'Race ended'
         };
@@ -153,7 +168,7 @@ async function getRegisteredRaces(){
 
 async function getRegisteredRaceById(email){
     const registeredRaces = database.prepare(queryRegisteredRaceById);
-    const curUId = await getUserById(email);
+    const curUId = await getUserIdByEmail(email);
     //const registeredRace = registeredRaces.get(curUId);
     return registeredRaces.get(curUId);
 }
@@ -178,6 +193,17 @@ async function getAllRacePosition(){
     return allRacePosition.all();
 }
 
+
+async function getRaceStatus(){
+    const raceStatusQuery = await database.prepare(queryRaceStatus);
+    const raceStatusQueries =  raceStatusQuery.all();
+    if(raceStatusQueries.length === 0){
+        return -1;
+    }
+    const raceStatus = raceStatusQueries[0];
+    console.log('raceStatus', raceStatus.race_started, raceStatus.start_time);
+    return raceStatus.race_started;
+}
 
 async function requestAllRacers() {
     const racer = await database.prepare(queryForOnlyRacers);
@@ -249,15 +275,14 @@ async function registerRace(email){
     }
 }
 
-async function createNewRace(email, name, cutoff_time, start_time,  loop_km){
+async function createNewRace(email, name, cutoff_time, start_time){
     const race = await database.prepare(newRace);
-    race.get(name, loop_km, start_time, cutoff_time,  email);
+    race.get(name, start_time, cutoff_time,  email);
     return {
         email : email,
         name : name,
         cutoff_time : cutoff_time,
         start_time : start_time,
-        loop_km:loop_km
     }
 }
 
@@ -316,7 +341,7 @@ async function getUserType(email){
 }
 
 
-async function getUserById(email){
+async function getUserIdByEmail(email){
     const query = database.prepare(queryForUserIdByEmail);
     const user = query.get(email)
     return user.id;
@@ -362,9 +387,10 @@ export default {
     checkLoggedIn, invalidateUser,
     requestAllRace, requestRacerPosition,
     updateRacerPosition, getAllUsers,
-    getUserByEmail, getUserById, registerRace,
+    getUserByEmail, getUserById: getUserIdByEmail, registerRace,
     getRegisteredRaces, getRegisteredRaceById,
     getAllRacePosition, updateStartRace,
     getRacers, requestAllRacers, updateEndRace,
-    recordLaps, getNewLaps, getRaceStartTime
+    recordLaps, getNewLaps, getRaceStartTime,
+    getRaceStatus, hasRegisteredForRace
 };

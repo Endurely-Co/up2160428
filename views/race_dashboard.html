@@ -22,11 +22,34 @@
             populateCurrentRace();
         });
     } else {
+        let prevSocCommand = undefined;
+        const socket = new WebSocket(`ws://${location.hostname}:8081`);
+        socket.addEventListener('open', (event) =>{
+            console.log('websocket connection open - race dashboard!');
+        });
 
-        console.log("DOM already loaded — run now");
         let raceInfo = document.getElementById('race-info');
         const registerButton = document.getElementById('register-race');
         checkRaceRegistration();
+        showOldMessage();
+
+        function showOldMessage(){
+            const message = localStorage.getItem('message');
+            if (message){
+                showToast(message, 'success');
+                localStorage.removeItem('message');
+            }
+        }
+
+        socket.addEventListener('message', (event) =>{
+            const cmdObj = JSON.parse(event.data);
+            if (prevSocCommand !== cmdObj.cmd){
+                raceInfo.removeChild(raceInfo.children[raceInfo.children.length - 1]);
+                newParagraph('Race status', cmdObj.cmd === 'start' ? 'Started' : 'Ended');
+            }
+            prevSocCommand = cmdObj.cmd;
+
+        });
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
@@ -59,7 +82,6 @@
         function checkRaceRegistration(){
             // registered-race
             const email = getCookie('email');
-            console.log('email--------->', email);
             fetch(`/api/registered-race?email=${email}`, {
                 method: 'GET',
                 headers: {
@@ -81,14 +103,18 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    email: getCookie('email')
+                }),
             }).then((res) => res.json())
                 .then((data) => {
                     if(data.error){
                         showToast(data.error, 'error');
                     }else{
-                        showToast(data.message, 'success');
+                        localStorage.setItem('message', data.message);
                         registerButton.textContent = 'Registered';
                         registerButton.disabled = true;
+                        window.location.reload();
                     }
                 }).catch((err) => {
                 showToast(err.message, 'error');
@@ -115,10 +141,10 @@
                         }
                         const race = data.data[0];
                         newParagraph('Name', race.name);
-                        newParagraph('Loop (km)', `${race.loop_km} km`);
                         newParagraph('Start Time', race.start_time);
                         newParagraph('Cutoff Time', race.cutoff_time);
-                        newParagraph('Your race id', race.cutoff_time);
+                        console.log('race_started#1', race.race_started)
+                        newParagraph('Race status', race.race_started === 0 ? 'Ended' : race.race_started === null ? 'Not Started' : 'Started');
                     }
                 }).catch((err) => {
                 console.log('User not logged inqq', 'error');

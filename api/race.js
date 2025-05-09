@@ -15,15 +15,28 @@ router.get('/current-race', async (req, res) => {
     }
 });
 
+router.get('/user-registered', async function hasUserRegisteredForRace(req, res){
+    const email = req.query.email;
+    const hasUserRegistered = await db.hasRegisteredForRace(email);
+    return res.status(200).json({
+        'registered': hasUserRegistered
+    })
+});
+
 router.get('/user-type', async function userMenuByType(req, res) {
     const userType = req.query.type;
+    const email = req.query.email;
+    const hasUserRegistered = await db.hasRegisteredForRace(email);
     console.log('userType_userType', userType);
     const response = {'menus': []};
     const timer = {id: 'stop-watch', name: 'Stop watch', page: 'timer'};
     let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'}
     if(userType === 'runner'){
         response['menus'].push(raceData);
-        response['menus'].push(timer);
+        // Show timer tab only if the user has registered for the race
+        if(hasUserRegistered){
+            response['menus'].push(timer);
+        }
     }else if(userType === 'volunteer'){
         raceData['id'] = 'cur-race';
         raceData['name'] = 'Current Race';
@@ -39,7 +52,11 @@ router.get('/user-type', async function userMenuByType(req, res) {
             {id: 'new-race', name: 'New Race', page: 'new-race'},
             {id: 'race-board', name: 'Participants', page: 'race-board'}]
             .forEach((menu) => {
-            response['menus'].push(menu)
+                response['menus'].push(menu)
+            });
+    }else{
+        return res.status(404).json({
+            error: 'User Not Found'
         });
     }
     return res.status(200).json(response);
@@ -48,6 +65,13 @@ router.get('/user-type', async function userMenuByType(req, res) {
 router.get('/racers', async (req, res) => {
     const racers = await db.requestAllRacers();
     return res.status(200).json(racers);
+});
+
+router.get('/race-status', async function raceStatus(req, res) {
+    const raceStatus = await db.getRaceStatus();
+    return res.status(200).json({
+        race_ended: raceStatus === 0
+    });
 });
 
 router.post('/suggest-racers', async (req, res) => {
@@ -105,11 +129,11 @@ router.post('/new-race', async (req, res) => {
 
 
 async function newRace(req, res){
-    const {name, loop_km, start_time, cutoff_time, email} = req.body;
+    const {name, start_time, cutoff_time, email} = req.body;
     console.log(req.body);
     try{
         const result = await db.createNewRace(email,
-            name, cutoff_time, start_time,  loop_km);
+            name, cutoff_time, start_time);
         if(result.error){
             return res.status(404).json({ error: result.error.message });
         }

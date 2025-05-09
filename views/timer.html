@@ -12,7 +12,7 @@
   <p class="race-title">Race Time</p>
   <p class="timer" id="timer">00:00:00.000</p>
   <div class="controls" id="controls">
-    <button id="startPause" type="button" class="ctr-button start">Start</button>
+    <button id="start-finish" type="button" class="ctr-button start">Start</button>
 <!--    <button id="lapse" type="button" class="ctr-button lap">Lapse</button>-->
 <!--    <button id="stop" type="button" class="ctr-button stop">Stop</button>-->
   </div>
@@ -24,12 +24,15 @@
 
 <div class="toast" id="toast"></div>
 
-<div id="snackbar">Are you sure you want to finish the race? <button id="finish-btn" class="def-button"><b>Confirm</b></button></div>
+<div id="snackbar">
+<!--  <button id="finish-btn" class="def-button"><b>Confirm</b>-->
+<!--</button>-->
+</div>
 <script>
   // To prevent Uncaught SyntaxError: redeclaration of const
   if (document.readyState !== "loading") {
     const toast = document.getElementById('toast');
-    const startBtn = document.getElementById('startPause');
+    const startBtn = document.getElementById('start-finish');
     // const stopBtn = document.getElementById('stop');
     // const lapseBtn = document.getElementById('lapse');
     const timer = document.getElementById('timer');
@@ -37,8 +40,7 @@
     const topNav = document.getElementById('topnav');
     const controls = document.getElementById('controls');
     const snackbar = document.getElementById("snackbar");
-    const finishBtn = document.getElementById('finish-btn');
-    const userTypeVal = getCookie('user_type')//`email=${data.email}; user_type=${data.user_type}`;
+    const userTypeVal = getCookie('user_type');//`email=${data.email}; user_type=${data.user_type}`;
 
     function getCookie(name) {
       const value = `; ${document.cookie}`;
@@ -64,19 +66,40 @@
 
     const socket = new WebSocket(`ws://${location.hostname}:8081`);
 
+
     // lapseBtn.addEventListener('click', addNewLapse);
     //submitLapsBtn.addEventListener('click', submitLaps);
 
     populateCurrentRace();
     doInitialStartTime();
+    checkRaceStatus();
 
     socket.addEventListener('open', (event) =>{
       console.log('websocket connection open!');
     });
 
-    finishBtn.addEventListener('click', (_) => {
-      sendCommand('stop');
-    });
+
+
+    function checkRaceStatus(){
+      fetch(`/api/race-status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then((response) => {
+        return response.json();
+      }).then((raceData) => {
+        console.log('raceData', raceData.race_ended);
+        const raceEnded = raceData.race_ended;
+        if(raceEnded){
+          timer.textContent = 'Race Ended';
+        }
+      }).catch((err) =>{
+        console.log('raceData_err', err);
+        console.error(err);
+      });
+
+    }
 
     socket.addEventListener('message', (event) =>{
       const cmdObj = JSON.parse(event.data);
@@ -89,7 +112,7 @@
           prevSocCommand = cmdObj.cmd;
           document.cookie = `timer_status=running`;
         }else{
-          console.log('websocket connection open! ---> showWarning');
+
           stopTimer();
           prevSocCommand ='';
         }
@@ -97,8 +120,19 @@
 
     });
 
-    function showWarning(){
+    function showWarning(snackbarData){
+      snackbar.textContent = snackbarData.message;
       snackbar.className = "show";
+      const actionBtn = document.createElement('button');
+      actionBtn.textContent = snackbarData.btnText;
+      actionBtn.className = "def-button";
+      actionBtn.onclick = () => {
+        sendCommand('stop');
+      }
+      if(snackbar.children.length > 1){
+        snackbar.removeChild(snackbar.lastChild);
+      }
+      snackbar.appendChild(actionBtn);
       const timeout = setTimeout(function(){
         snackbar.className = "";
         clearTimeout(timeout)
@@ -108,10 +142,16 @@
 
 
     function submitLaps(){
-      for (let i = 0; i < topNav.children.length; i++) {
-        topNav.children[i].style.display = 'none';
+      const userType = getCookie('user_type');
+      if (userType === 'organiser'){
+        for (let i = 0; i < topNav.children.length; i++) {
+          topNav.children[i].style.display = 'none';
+        }
+        window.location.href = '/record-race';
+      }else{
+        // show race ended screen
+        timer.textContent = 'Race Ended';
       }
-      window.location.href = '/record-race';
     }
 
 
@@ -211,6 +251,12 @@
         return response.json();
       }).then(function(startTime) {
 
+        if(startTime.start_time === null){
+          console.log('race_started ------>', 'START TIME IS NOT STARTED');
+          startBtn.disabled = true;
+          return;
+        }
+
         if (startTime.start_time.split('-')[0] === 'NaN'
                 || startTime.start_time.split(':')[startTime.start_time.length -1] === '00') return;
 
@@ -245,6 +291,7 @@
       intervalId = null;
       updateEndTime(endTime);
       updateClock(true);
+      submitLaps();
     }
 
 
@@ -320,7 +367,10 @@
       if([startText].includes(startBtn.textContent)){
         sendCommand('start');
       }else{
-        showWarning();
+        showWarning({
+          btnText: 'Confirm',
+          message: 'Are you sure you want to finish the race?'
+        });
       }
     });
 
