@@ -130,6 +130,7 @@
         if(firstLoad){
             const cachedSelection = localStorage.getItem(SELECTED_PAGE_KEY);
             let selectedPage = parseInt(cachedSelection ? cachedSelection : `${START_TAB}`);
+            console.log('selectedPage', selectedPage);
             console.log('firstLoad', topNav.children[selectedPage] === undefined, topNav.children[selectedPage]);
             selectedTabId = topNav.children[selectedPage] === undefined ? 0 : topNav.children[selectedPage].id;
             loadPage(topNav.children[selectedPage].target);

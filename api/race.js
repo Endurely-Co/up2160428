@@ -33,42 +33,46 @@ router.get('/search-racers', async function searchRacer(req, res){
 });
 
 router.get('/user-type', async function userMenuByType(req, res) {
-    const userType = req.query.type;
-    const email = req.query.email;
-    const hasUserRegistered = await db.hasRegisteredForRace(email);
-    console.log('userType_userType', userType);
-    const response = {'menus': []};
-    const timer = {id: 'stop-watch', name: 'Stop watch', page: 'timer'};
-    let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'}
-    if(userType === 'runner'){
-        response['menus'].push(raceData);
-        // Show timer tab only if the user has registered for the race
-        if(hasUserRegistered){
-            response['menus'].push(timer);
-        }
-    }else if(userType === 'volunteer'){
-        raceData['id'] = 'cur-race';
-        raceData['name'] = 'Current Race';
-        const menus = [
-            timer,raceData]
-        menus.forEach((menu) => {
-            response['menus'].push(menu)
-        });
-    }else if(userType === 'organiser'){
-        raceData['id'] = 'cur-race';
-        raceData['name'] = 'Current Race';
-        [timer,raceData,
-            {id: 'new-race', name: 'New Race', page: 'new-race'},
-            {id: 'race-board', name: 'Participants', page: 'race-board'}]
-            .forEach((menu) => {
+    try{
+        const userType = req.query.type;
+        const email = req.query.email;
+        const hasUserRegistered = await db.hasRegisteredForRace(email);
+        console.log('userType_userType', userType);
+        const response = {'menus': []};
+        const timer = {id: 'stop-watch', name: 'Stop watch', page: 'timer'};
+        let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'}
+        if(userType === 'runner'){
+            response['menus'].push(raceData);
+            // Show timer tab only if the user has registered for the race
+            if(hasUserRegistered){
+                response['menus'].push(timer);
+            }
+        }else if(userType === 'volunteer'){
+            raceData['id'] = 'cur-race';
+            raceData['name'] = 'Current Race';
+            const menus = [
+                timer,raceData]
+            menus.forEach((menu) => {
                 response['menus'].push(menu)
             });
-    }else{
-        return res.status(404).json({
-            error: 'User Not Found'
-        });
+        }else if(userType === 'organiser'){
+            raceData['id'] = 'cur-race';
+            raceData['name'] = 'Current Race';
+            [timer,raceData,
+                {id: 'new-race', name: 'New Race', page: 'new-race'},
+                {id: 'race-board', name: 'Participants', page: 'race-board'}]
+                .forEach((menu) => {
+                    response['menus'].push(menu)
+                });
+        }else{
+            return res.status(404).json({
+                error: 'User Not Found'
+            });
+        }
+        return res.status(200).json(response);
+    }catch (e) {
+        return res.status(500).send({error: e});
     }
-    return res.status(200).json(response);
 });
 // requestRacerPosition
 router.get('/racers', async (req, res) => {
@@ -201,17 +205,28 @@ router.get('/records', async (req, res) => {
 });
 
 router.post('/disqualify', async function doDisqualifyRacer(req, res) {
-    const {racer_id, status} = req.params.id;
+    const {status, racer_id} = req.body;
     try{
         const result = await db.disqualifyRunner(status, racer_id);
         return res.status(200).json(result);
+    }catch (e) {
+        return res.status(500).send({error: e.message});
+    }
+});
+
+
+router.get('/disqualify', async function getDisqualifiedRacer(req, res)  {
+    const disqualifiedRacers = await db.getDisqualifiedRacers();
+    try{
+        return res.status(200).json({
+            data: disqualifiedRacers
+        });
     }catch (e) {
         return res.status(500).send({error: e});
     }
 });
 
-
-router.post('/register-race', async (req, res) => {
+router.post('/register-race', async function registerUserForRace (req, res) {
     try{
         const {email} = req.body;
         const registerRace = await db.registerRace(email);

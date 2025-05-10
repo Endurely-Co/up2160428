@@ -25,3 +25,11 @@ li{
     font-size: 17px;
 }
 
+.disqualified{
+    cursor: not-allowed;
+    background: grey;
+    color: white;
+    pointer-events: none;
+
+}
+

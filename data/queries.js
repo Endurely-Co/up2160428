@@ -23,7 +23,11 @@ const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
 const registerUser = `INSERT INTO registered_race(user_id, race_id, disqualified) VALUES(?, ?, ?)`;
 
-const updateDisqualifyUser = `UPDATE registered_race SET disqualified = ? WHERE race_id = ?`
+const updateDisqualifyUser = `UPDATE registered_race SET disqualified = ? WHERE race_id = ?`;
+
+const queryDisqualifiedUserByRacer = `SELECT disqualified FROM registered_race WHERE race_id = ?`;
+
+const queryDisqualifiedUsers = `SELECT disqualified, race_id FROM registered_race`;
 
 const queryRegisteredRaces = `SELECT * FROM registered_race`;
 
@@ -223,9 +227,42 @@ async function getRaceStatus(){
 }
 
 async function requestAllRacers() {
-    const racer = await database.prepare(queryForOnlyRacers);
+    const disqualifiedRacers = await database.prepare(queryDisqualifiedUsers);
+    const disqualified = disqualifiedRacers.all();
+    const racerQuery = await database.prepare(queryRegisteredRaces);
+
+    const racersData = await Promise.all(racerQuery.all().map(async (racer) => {
+        const userById = await database.prepare(queryForUserById);
+        return userById.get(racer.user_id);
+    }));
+    const racers = [];
+    /*
+    racers.push({
+            id: racer.id,
+            name: racer.name,
+            email: racer.email,
+            isLoggedIn: racer.isLoggedIn,
+            user_type: racer.user_type,
+            race_id: racer.race_id,
+            disqualified:
+        });
+     */
+
+    console.log('racersData_racersData', racersData);
+    for(let i =0; i < racersData.length ; i++){
+        const racer = racersData[i];
+        racers.push({
+            id: racer.id,
+            name: racer.name,
+            email: racer.email,
+            isLoggedIn: racer.isLoggedIn,
+            user_type: racer.user_type,
+            race_id: racer.race_id,
+            disqualified: disqualified[i].disqualified
+        });
+    }
     return {
-        racers: racer.all()
+        racers: racers
     };
 }
 
@@ -284,11 +321,17 @@ function getRaceId(racerIds){
 async function disqualifyRunner(status, racerId){
     // 0: disqualified
     // 1: not disqualified
+    console.log('registerRace--', status, racerId);
     const registerRace = database.prepare(updateDisqualifyUser);
     registerRace.run(status, racerId);
     return {
         message: `${racerId} has been successfully disqualified`,
     }
+}
+
+async function getDisqualifiedRacers(){
+    const disqualifiedRacers = await database.prepare(queryDisqualifiedUsers);
+    return disqualifiedRacers.all();
 }
 
 async function registerRace(email){
@@ -425,5 +468,5 @@ export default {
     getNewLaps, getRaceStartTime,
     getRaceStatus, hasRegisteredForRace,
     searchRacerById, recordLaps,
-    disqualifyRunner
+    disqualifyRunner, getDisqualifiedRacers
 };
