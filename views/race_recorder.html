@@ -8,6 +8,8 @@
   <link rel='stylesheet' href='/stylesheets/button.css' />
     <link rel="stylesheet" href="/stylesheets/race.css">
   <link rel="stylesheet" href="/stylesheets/toast.css">
+  <link rel="stylesheet" href="/stylesheets/form.css">
+  <link rel="stylesheet" href="/stylesheets/user_suggestion.css">
 
     <title>Title</title>
 </head>
@@ -25,15 +27,44 @@
 
 <form id="record-race-form">
 
-  <div class="container">
+<table style="width:100%; text-align: left;">
+  <tr>
+    <th>
+      <label for="racer_num">Racer number:</label>
+      <input type="number" id="racer_num" name="racer_num" class="input" maxlength="5" required>
+      <div id="search-card" style="display: none">
+        <div class="search-container" id="searched-list">
+        </div>
+      </div>
 
-    <label for="racer-select"><b>Select race position:</b></label>
-    <select name="pets" id="racer-select"></select>
+    </th>
 
-    <label for="position-select"><b>Select race position:</b></label>
-    <select name="pets" id="position-select"></select>
+    <th><label for="racer_position">Racer's position:</label>
+      <input type="number" id="racer_position" name="racer_position" maxlength="5" required></th>
+  </tr>
+</table>
+  <br>
+  <button type="submit" class="def-button" >Record Position</button>
 
-    <button type="submit" class="def-button" >Record Position</button>
+  <br/>
+  <br>
+  <div class="rest-container" id="container-column">
+    <div class="rest-racer">
+      <div class="rest-position">4th</div>
+      <div class="rest-name">Racer D</div>
+      <div class="rest-lap">Lap 4/10</div>
+    </div>
+    <div class="rest-racer">
+      <div class="rest-position">5th</div>
+      <div class="rest-name">Racer E</div>
+      <div class="rest-lap">Lap 4/10</div>
+    </div>
+    <div class="rest-racer">
+      <div class="rest-position">6th</div>
+      <div class="rest-name">Racer F</div>
+      <div class="rest-lap">Lap 3/10</div>
+    </div>
+    <!-- Add more as needed -->
   </div>
 
 </form>
@@ -45,13 +76,14 @@
   const isMobile = document.getElementById("topnav-mob").checkVisibility();
   let topNav = isMobile ? document.getElementById("my-links")
           : document.getElementById("topnav");
-  const racePositionSelector = document.getElementById('position-select');
-  const racerSelect = document.getElementById('racer-select');
+  const racePositionSelector = document.getElementById('racer_position');
   const raceForm = document.getElementById('record-race-form');
   const myLinks = document.getElementById("my-links");
-  let distinctText = undefined;
-
-  let raceId = undefined;
+  const searchedList = document.getElementById('searched-list');
+  const racerNum = document.getElementById("racer_num");
+  const searchCard = document.getElementById('search-card');
+  const containerColumn = document.getElementById('container-column');
+  let searchedinterval = undefined;
 
   document.addEventListener('DOMContentLoaded', () => {
     addRacePositions();
@@ -60,7 +92,19 @@
     // show menu
     addMenus();
     initialLoad();
+
   });
+
+
+  racerNum.oninput = (e) => {
+    if(searchedinterval){
+      clearInterval(searchedinterval);
+    }
+    searchedinterval = setTimeout(() =>{
+      searchRacer(e.target.value);
+    }, 500);
+
+  }
 
 
   function initialLoad(){
@@ -92,11 +136,6 @@
     topNav.appendChild(btnMenu);
   }
 
-  raceForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    recordLabs()
-  });
-
 
   function openMenu() {
     if (myLinks.style.display === "block") {
@@ -122,27 +161,65 @@
     }, 3000);
   }
 
-  function recordLabs(){
-    fetch('/api/record-laps', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        position: racePositionSelector.value,
-        racer_id: racerSelect.value,
-        race_id: raceId,
-      })
+
+  function searchRacer(query){
+    fetch(`/api/search-racers?q=${query}`, {
+      method: 'GET',
     }).then((response) => {
       return response.json();
-    }).then((data) =>{
-      if(distinctText === data.message){
-        showToast('Runner added successfully', 'success');
-        // window.location.replace('/');
-        // localStorage.removeItem('cachedLaps');
+    }).then((races) => {
+      while (searchedList.lastChild){
+        searchedList.removeChild(searchedList.lastChild);
       }
+      searchCard.style.display = races.racers.length > 0 ? 'flex': 'none';
+      races.racers.forEach((racer) => {
+
+        const searchedItem = document.createElement('div');
+        searchedItem.className = "search-item";
+
+        const searchedNumItem = document.createElement('div');
+        searchedNumItem.textContent = `${racer.race_id}`;
+        searchedNumItem.className = 'suggestion-num';
+
+        // racer's name
+        const searchedNameItem = document.createElement('div');
+        searchedNameItem.textContent = `${racer.name}`;
+        searchedNameItem.className = 'suggestion-name';
+
+        searchedItem.appendChild(searchedNumItem);
+        searchedItem.appendChild(searchedNameItem);
+
+        searchedList.appendChild(searchedItem);
+        searchedItem.onclick = () => {
+          searchCard.style.display = 'none';
+        }
+      });
+    }).catch((err) => {
+      console.log(err);
     });
   }
+
+  // function recordLabs(){
+  //   fetch('/api/record-laps', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     body: JSON.stringify({
+  //       position: racePositionSelector.value,
+  //       racer_id: racerNum.value,
+  //       race_id: raceId,
+  //     })
+  //   }).then((response) => {
+  //     return response.json();
+  //   }).then((data) =>{
+  //     if(distinctText === data.message){
+  //       showToast('Runner added successfully', 'success');
+  //       // window.location.replace('/');
+  //       // localStorage.removeItem('cachedLaps');
+  //     }
+  //   });
+  // }
 
   function getRacers(){
     fetch('/api/racers/', {
@@ -158,7 +235,7 @@
         const racerOption = document.createElement('option');
         racerOption.textContent = `Runner ${racers[i].race_id}`;
         racerOption.value = racers[i].race_id;
-        racerSelect.appendChild(racerOption);
+        //racerSelect.appendChild(racerOption);
       }
       console.log(racers);
     }).catch((error) => {
