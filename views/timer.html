@@ -68,7 +68,7 @@
 
 
     // lapseBtn.addEventListener('click', addNewLapse);
-    //submitLapsBtn.addEventListener('click', submitLaps);
+    //submitLapsBtn.addEventListener('click', submitRecords);
 
     populateCurrentRace();
     doInitialStartTime();
@@ -141,7 +141,7 @@
 
 
 
-    function submitLaps(){
+    function submitRecords(){
       const userType = getCookie('user_type');
       if (userType === 'organiser'){
         for (let i = 0; i < topNav.children.length; i++) {
@@ -289,9 +289,13 @@
       startedTime =0;
       isRunning = false;
       intervalId = null;
+      localStorage.setItem('race_data', JSON.stringify({
+        time: timer.textContent,
+        race_id: raceId
+      }));
       updateEndTime(endTime);
       updateClock(true);
-      submitLaps();
+      setInterval(submitRecords, 500);
     }
 
 

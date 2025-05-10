@@ -63,6 +63,22 @@ h1 {
     z-index: 999;
 }
 
+/*.recorder-time {*/
+/*    font-family: 'Times New Roman', Times, serif;*/
+/*    font-size: 100px;*/
+/*    text-align: center;*/
+/*    width: 100%;*/
+/*    height: fit-content;*/
+/*}*/
+
+
+.recorder-time{
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 5vw;
+    text-align: center;
+    width: 100%;
+    height: fit-content;
+}
 
 .input-container input {
     position: relative;

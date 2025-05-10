@@ -25,8 +25,11 @@
 <div  class="timer-container">
 <h2>Record Race</h2>
 
-<form id="record-race-form">
+  <div class="recorder-time">
+    <p id="recorded-time">00:00:00.000</p>
+  </div>
 
+<form id="record-race-form">
 <table style="width:100%; text-align: left;">
   <tr>
     <th>
@@ -79,7 +82,6 @@
   let topNav = isMobile ? document.getElementById("my-links")
           : document.getElementById("topnav");
   const racePositionSelector = document.getElementById('racer-position');
-  const raceForm = document.getElementById('record-race-form');
   const myLinks = document.getElementById("my-links");
   const searchedList = document.getElementById('searched-list');
   const racerNum = document.getElementById("racer_num");
@@ -87,8 +89,9 @@
   const submitRecord = document.getElementById('submit-record');
   const addNewRecord = document.getElementById('add-new');
   const raceRecordsSection = document.getElementById('race-records');
+  const recordedTime = document.getElementById('recorded-time');
   let racerData = null;
-  const raceRecords = [];
+  let raceRecords = [];
 
 
   let searchedinterval = undefined;
@@ -103,12 +106,60 @@
   });
 
 
+  function getRaceData(){
+    const raceData = localStorage.getItem('racer_data');
+    if(raceData){
+      return raceRecords.length > 0 ? raceRecords : JSON.parse(raceData).race;
+    }
+    return null;
+  }
+
+  function updateRacerCache(record=undefined){
+    localStorage.setItem('racer_data', JSON.stringify({
+      race: record ? record : raceRecords
+    }));
+  }
+
+  function getRaceDataFromTimePage(){
+    return JSON.parse(localStorage.getItem('race_data'));
+  }
+
   submitRecord.onclick = () => {
+    submitRecord.disabled = true;
+    const raceData = getRaceDataFromTimePage();
+    console.log('raceRecords', raceRecords, raceData);
+    fetch('/api/record-race', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        race_time: raceData.time,
+        runners: raceRecords,
+        race_id: raceData.race_id,
+      })
+    }).then((res) => {
+      return res.json();
+    }).then((data) => {
+      submitRecord.disabled = false;
+      localStorage.setItem('message', data.message);
+      localStorage.removeItem('race_data');
+      localStorage.removeItem('racer_data');
+      window.location.replace('/');
+    }).catch((err) => {
+      showToast(err, 'error');
+      console.log('record-race', err);
+      submitRecord.disabled = false;
+    });
   }
 
   addNewRecord.onclick = () => {
+    if(!raceRecords)return;
     const raceIds = raceRecords.map((raceRecord) => raceRecord.race_id);
-    if (racerData && !raceIds.includes(racerData.race_id)){
+    const selectedPositions = raceRecords.map((raceRecord) => raceRecord.position);
+
+    // ( && !selectedPositions.includes(racePositionSelector.value))
+    if (racerData && !raceIds.includes(racerData.race_id) ){
       raceRecords.push({
         name: racerData.name,
         race_id: racerData.race_id,
@@ -116,6 +167,7 @@
       });
 
       createNewRunner(racePositionSelector.value, racerData.name, racerData.race_id);
+      updateRacerCache();
     }
 
   }
@@ -147,6 +199,28 @@
     if(isMobile){
       myLinks.style.display = "none";
     }
+
+    // Load cached data if there's any
+    // This make's sure that we can still upload the data if there was internet problem
+    const racerList = getRaceData();
+    if (racerList){
+      raceRecords = racerList;
+    }
+    console.log('racerList---------->', raceRecords);
+    if(raceRecords){
+      raceRecords.forEach((raceRecord) => {
+        createNewRunner(raceRecord.position, raceRecord.name, raceRecord.race_id);
+      });
+    }
+
+    // Show recorded time
+    const raceData = getRaceDataFromTimePage();
+    if(raceData){
+      recordedTime.textContent = raceData.time;
+    }else{
+      // No need to continue if there's no race data
+      window.location.replace('/');
+    }
   }
 
 
@@ -168,8 +242,6 @@
       myLinks.style.display = "block";
     }
   }
-
-
 
   function showToast(message, type){
     toast.textContent = message;
@@ -225,13 +297,6 @@
   }
 
   function createNewRunner(racePosition, racerName, raceNumber){
-    /*
-     <div class="rest-racer">
-      <div class="rest-position">4th</div>
-      <div class="rest-name">Racer D</div>
-      <div class="rest-lap">Lap 4/10</div>
-    </div>
-     */
     const searchedItem = document.createElement('div');
     searchedItem.className = "rest-racer";
 
@@ -251,13 +316,37 @@
 
     const delBtn = document.createElement('button');
     delBtn.textContent = 'Delete';
+    delBtn.className = 'delete-btn';
     delBtn.type = 'button';
     delBtn.id = raceNumber
     searchedNumItem.appendChild(delBtn);
-    // raceRecordsSection.map((sii))
-    // delBtn.onclick = (e) => {
-    //   raceRecordsSection.removeChild()
-    // }
+
+    delBtn.onclick = (e) => {
+      const raceData = getRaceData();
+      console.log('raceData ------------> 1', raceData);
+      const raceRecIds = raceData.map((race) => race.race_id);
+      for(let i = 0; i < raceRecordsSection.children.length; i++){
+        const raceNum = raceRecordsSection.children[i].children[2].textContent;
+        if(raceNum.includes(e.target.id)){
+          raceRecordsSection.removeChild(raceRecordsSection.children[i]);
+        }
+      }
+
+
+      if(raceRecIds.includes(raceNumber)){
+        const idIndex = raceRecIds.indexOf(raceNumber);
+        if (idIndex < 1){
+          raceData.splice(idIndex, 1);
+        }else{
+          raceData.splice(idIndex, idIndex+1);
+        }
+      }
+
+      raceRecords = raceData;
+      updateRacerCache(raceRecords);
+      console.log('raceRecords-raceRecords-', raceData, raceRecords);
+
+    }
 
     searchedItem.appendChild(searchedPosItem);
     searchedItem.appendChild(searchedNameItem);
@@ -286,7 +375,7 @@
         racerOption.value = racers[i].race_id;
         //racerSelect.appendChild(racerOption);
       }
-      console.log(racers);
+      console.log('getRacers', racers);
     }).catch((error) => {
       console.log('error', error);
     });

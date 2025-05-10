@@ -99,13 +99,13 @@ async function hasRegisteredForRace(email){
     return registerRace.get(userId) !== undefined;
 }
 
-// async function recordLaps(racerPos, lapsTime, racerId, raceId){
-//     const newLaps = await database.prepare(insertNewLaps);
-//     newLaps.run(racerPos, lapsTime, racerId, raceId);
-//     return {
-//         message: 'Laps record added successfully.',
-//     }
-// }
+async function recordLaps(racerPos, raceTime, racerId, raceId){
+    const newLaps = await database.prepare(insertNewLaps);
+    newLaps.run(racerPos, raceTime, racerId, raceId);
+    return {
+        message: 'Laps record added successfully.',
+    }
+}
 
 async function getNewLaps(){
     const newLaps = await database.prepare(queryNewLaps);
@@ -349,6 +349,8 @@ async function invalidateUser(email) {
     };
 }
 
+
+
 async function getUserType(email){
     const query = database.prepare(queryUserType);
     const userByEmails = query.get(email);
@@ -408,5 +410,5 @@ export default {
     getRacers, requestAllRacers, updateEndRace,
     getNewLaps, getRaceStartTime,
     getRaceStatus, hasRegisteredForRace,
-    searchRacerById
+    searchRacerById, recordLaps
 };
