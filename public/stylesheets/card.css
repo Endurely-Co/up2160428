@@ -1,0 +1,37 @@
+.card {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    transition: 0.3s;
+    width: 46.4%;
+    z-index: 9999;
+    position: absolute; /* Key: takes it out of the normal flow */
+    background-color: white;
+}
+
+.input-container input {
+    position: relative;
+    z-index: 1; /* Lower than .card */
+}
+
+.card:hover {
+    box-shadow: 0 3px 5px 0 rgba(0,0,0,0.2);
+}
+
+.container {
+    padding: 2px 16px;
+}
+
+li:hover {
+    background: darkgrey;
+    cursor: pointer;
+}
+
+li {
+    padding: 10px;
+    margin: 0;
+    border-bottom: lightblue 1px solid;
+}
+
+ul{
+    list-style-type: none;
+    padding-left: 0;
+}

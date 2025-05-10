@@ -47,6 +47,8 @@ RETURNING id, name, email, isLoggedIn, user_type, race_id`;
 
 const queryRacerId = `SELECT race_id FROM race WHERE email = ?`;
 
+const queryRacerById = `SELECT race_id, name FROM user WHERE race_id LIKE ?`;
+
 const queryRaceNum = `SELECT race_id FROM user WHERE race_id IS NOT NULL ORDER BY race_id DESC LIMIT 1`;
 
 const insertRacerPosition = `INSERT OR REPLACE INTO racer_position(latitude, longitude, racer_id) VALUES (?, ?, ?);`;
@@ -76,6 +78,19 @@ async function setRaceResult(){
     return (await database.prepare(queryRaceResults));
 }
 
+async function searchRacerById(query){
+    const queryRacer = await database.prepare(queryRacerById);
+    const searchedRacer = await queryRacer.all(`%${query}`);
+
+    return searchedRacer;
+}
+
+
+async function getRacerId(email){
+    const racerNumber = await database.prepare(queryRacerId);
+    return racerNumber.get(email);
+}
+
 
 async function hasRegisteredForRace(email){
     const registerRace = await database.prepare(queryUserRaceRegistered);
@@ -84,13 +99,13 @@ async function hasRegisteredForRace(email){
     return registerRace.get(userId) !== undefined;
 }
 
-async function recordLaps(racerPos, lapsTime, racerId, raceId){
-    const newLaps = await database.prepare(insertNewLaps);
-    newLaps.run(racerPos, lapsTime, racerId, raceId);
-    return {
-        message: 'Laps record added successfully.',
-    }
-}
+// async function recordLaps(racerPos, lapsTime, racerId, raceId){
+//     const newLaps = await database.prepare(insertNewLaps);
+//     newLaps.run(racerPos, lapsTime, racerId, raceId);
+//     return {
+//         message: 'Laps record added successfully.',
+//     }
+// }
 
 async function getNewLaps(){
     const newLaps = await database.prepare(queryNewLaps);
@@ -391,6 +406,7 @@ export default {
     getRegisteredRaces, getRegisteredRaceById,
     getAllRacePosition, updateStartRace,
     getRacers, requestAllRacers, updateEndRace,
-    recordLaps, getNewLaps, getRaceStartTime,
-    getRaceStatus, hasRegisteredForRace
+    getNewLaps, getRaceStartTime,
+    getRaceStatus, hasRegisteredForRace,
+    searchRacerById
 };

@@ -23,6 +23,15 @@ router.get('/user-registered', async function hasUserRegisteredForRace(req, res)
     })
 });
 
+router.get('/search-racers', async function searchRacer(req, res){
+    const racerQuery = req.query.q;
+    const qRacer = await db.searchRacerById(racerQuery);
+    console.log('qRacer', qRacer);
+    return res.status(200).json({
+        'racers': racerQuery.length > 0 ? qRacer : [],
+    })
+});
+
 router.get('/user-type', async function userMenuByType(req, res) {
     const userType = req.query.type;
     const email = req.query.email;
@@ -170,17 +179,17 @@ router.get('/runner-positions', async (req, res) => {
     return res.status(200).json(racerPosition);
 });
 
-router.post('/record-laps', async (req, res) => {
-    const {laps, position, racer_id, race_id} = req.body;
-    let raceLaps = [];
-    // racerPos, lapsTime, racerId, raceId
-    for (let i =0; i< laps.length; i++){
-        const lap = laps[i];
-        const racerPosition = await db.recordLaps(position, lap, racer_id, race_id);
-        raceLaps.push(racerPosition);
-    }
-    return res.status(200).json(raceLaps);
-});
+// router.post('/record-laps', async (req, res) => {
+//     const {laps, position, racer_id, race_id} = req.body;
+//     let raceLaps = [];
+//     // racerPos, lapsTime, racerId, raceId
+//     for (let i =0; i< laps.length; i++){
+//         const lap = laps[i];
+//         const racerPosition = await db.recordLaps(position, lap, racer_id, race_id);
+//         raceLaps.push(racerPosition);
+//     }
+//     return res.status(200).json(raceLaps);
+// });
 
 router.get('/records', async (req, res) => {
     const racerPosition = await db.getNewLaps();
