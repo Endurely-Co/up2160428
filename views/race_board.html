@@ -5,6 +5,8 @@
     <title>Title</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/stylesheets/race_board.css">
+    <link rel="stylesheet" href="/stylesheets/user_suggestion.css">
+    <link rel="stylesheet" href="/stylesheets/confirmation_snackbar.css">
 </head>
 <body class="timer-container">
 
@@ -19,13 +21,37 @@
         </th>
     </tr>
 </table>
-
-<div id="people" class="people-content">
-    <ol id="item"></ol>
+<div class="rest-container" id="race-records">
 </div>
+<div id="snackbar">
+</div>
+
 <script>
+    // Prevent the app from crashing because of duplicate variables.
     if (document.readyState !== "loading") {
         const peopleRowItem = document.getElementById('item');
+        const raceRecordsSection = document.getElementById('race-records');
+        const snackbar = document.getElementById("snackbar");
+
+        function showWarning(snackbarData, action){
+            snackbar.textContent = snackbarData.message;
+            snackbar.className = "show";
+            const actionBtn = document.createElement('button');
+            actionBtn.textContent = snackbarData.btnText;
+            actionBtn.className = "def-button";
+            actionBtn.onclick = () => {
+                action();
+            }
+            if(snackbar.children.length > 1){
+                snackbar.removeChild(snackbar.lastChild);
+            }
+            snackbar.appendChild(actionBtn);
+            const timeout = setTimeout(function(){
+                snackbar.className = "";
+                clearTimeout(timeout)
+            }, 3000);
+        }
+
 
         function showToast(message, type){
             toast.textContent = message;
@@ -57,10 +83,10 @@
                 }
             }).then(response => response.json())
                 .then((racerList) => {
-                    console.log('racerList', racerList.racers[0]);
+                    console.log('racerList', racerList.racers[0], );
                     if (racerList.racers.length > 0) {
                         racerList.racers.forEach((racer) => {
-                            buildRunnerItems(racer);
+                            createNewRunner('1', racer.name, racer.race_id);
                         });
                     }else{
                         // Not racer
@@ -78,7 +104,85 @@
             item.classList.add('people-item');
             peopleRowItem.appendChild(item);
         }
+
+
+        // Create each row
+
+        function createNewRunner(racePosition, racerName, raceNumber){
+
+            const racerItem = document.createElement('div');
+            racerItem.className = "rest-racer";
+
+            const searchedPosItem = document.createElement('div');
+            searchedPosItem.textContent = `${racePosition}`;
+            searchedPosItem.className = 'rest-position';
+
+            // racer's name
+            const searchedNameItem = document.createElement('div');
+            searchedNameItem.textContent = `${racerName}`;
+            searchedNameItem.className = 'rest-name';
+
+
+            const searchedNumItem = document.createElement('div');
+            searchedNumItem.textContent = `${raceNumber}`;
+            searchedNumItem.className = 'rest-lap';
+
+            const disqualifyBtn = document.createElement('button');
+            disqualifyBtn.textContent = 'Disqualify';
+            disqualifyBtn.className = 'delete-btn';
+            disqualifyBtn.type = 'button';
+            disqualifyBtn.id = raceNumber
+            searchedNumItem.appendChild(disqualifyBtn);
+
+            disqualifyBtn.onclick = (e) => {
+                showWarning({
+                    btnText: 'Confirm',
+                    message: `Are you sure you want to disqualify ${raceNumber}?`
+                }, function onActionClick(){
+                    console.log('disqualifying', raceNumber);
+                });
+
+                // const raceData = getRaceData();
+                // const raceRecIds = raceData.map((race) => race.race_id);
+                // for(let i = 0; i < raceRecordsSection.children.length; i++){
+                //     const raceNum = raceRecordsSection.children[i].children[2].textContent;
+                //     if(raceNum.includes(e.target.id)){
+                //         raceRecordsSection.removeChild(raceRecordsSection.children[i]);
+                //     }
+                // }
+                //
+                //
+                // if(raceRecIds.includes(raceNumber)){
+                //     const idIndex = raceRecIds.indexOf(raceNumber);
+                //     if (idIndex < 1){
+                //         raceData.splice(idIndex, 1);
+                //     }else{
+                //         raceData.splice(idIndex, idIndex+1);
+                //     }
+                // }
+                //
+                // raceRecords = raceData;
+                // if(raceRecords.length === 0){
+                //     disableSubmitRecordBtn()
+                // }
+                // updateRacerCache(raceRecords);
+                // console.log('raceRecords-raceRecords-', raceData, raceRecords);
+
+            }
+
+            racerItem.appendChild(searchedPosItem);
+            racerItem.appendChild(searchedNameItem);
+            racerItem.appendChild(searchedNumItem);
+
+            raceRecordsSection.appendChild(racerItem);
+            // racerItem.onclick = () => {
+            //     searchCard.style.display = 'none';
+            // }
+        }
     }
+
+
+
 
 </script>
 </body>

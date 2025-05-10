@@ -20,7 +20,8 @@ const initDatabase = `
                                                   user_id INTEGER PRIMARY KEY,
                                                   race_id INTEGER,
                                                   FOREIGN KEY(user_id) REFERENCES user(id),
-        FOREIGN KEY(race_id) REFERENCES race(id)
+        FOREIGN KEY(race_id) REFERENCES race(id),
+        disqualified INTEGER NOT NULL, 
         );
 
     CREATE TABLE IF NOT EXISTS race(

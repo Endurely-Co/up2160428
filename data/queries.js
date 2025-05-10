@@ -21,7 +21,9 @@ const queryRaceId = `SELECT id FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
-const registerUser = `INSERT INTO registered_race(user_id, race_id) VALUES(?, ?)`;
+const registerUser = `INSERT INTO registered_race(user_id, race_id, disqualified) VALUES(?, ?, ?)`;
+
+const updateDisqualifyUser = `UPDATE registered_race SET disqualified = ? WHERE race_id = ?`
 
 const queryRegisteredRaces = `SELECT * FROM registered_race`;
 
@@ -279,12 +281,24 @@ function getRaceId(racerIds){
     return `${raceId}${raceIdInt}`;
 }
 
+async function disqualifyRunner(status, racerId){
+    // 0: disqualified
+    // 1: not disqualified
+    const registerRace = database.prepare(updateDisqualifyUser);
+    registerRace.run(status, racerId);
+    return {
+        message: `${racerId} has been successfully disqualified`,
+    }
+}
+
 async function registerRace(email){
     const race = await requestLatestRace();
     const queryUser = database.prepare(queryForUserIdByEmail)
     const user = queryUser.get(email);
     const registerRace = database.prepare(registerUser);
-    registerRace.get(user.id, race[0].id); //race_id
+    // 0: disqualified
+    // 1: not disqualified
+    registerRace.get(user.id, race[0].id, 0); //race_id
     return {
         message: 'Race was registered'
     }
@@ -410,5 +424,6 @@ export default {
     getRacers, requestAllRacers, updateEndRace,
     getNewLaps, getRaceStartTime,
     getRaceStatus, hasRegisteredForRace,
-    searchRacerById, recordLaps
+    searchRacerById, recordLaps,
+    disqualifyRunner
 };

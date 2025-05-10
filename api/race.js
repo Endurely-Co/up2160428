@@ -200,6 +200,16 @@ router.get('/records', async (req, res) => {
     return res.status(200).json(racerPosition);
 });
 
+router.post('/disqualify', async function doDisqualifyRacer(req, res) {
+    const {racer_id, status} = req.params.id;
+    try{
+        const result = await db.disqualifyRunner(status, racer_id);
+        return res.status(200).json(result);
+    }catch (e) {
+        return res.status(500).send({error: e});
+    }
+});
+
 
 router.post('/register-race', async (req, res) => {
     try{

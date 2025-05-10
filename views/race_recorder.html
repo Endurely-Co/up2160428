@@ -51,22 +51,6 @@
   <br/>
   <br>
   <div class="rest-container" id="race-records">
-<!--    <div class="rest-racer">-->
-<!--      <div class="rest-position">4th</div>-->
-<!--      <div class="rest-name">Racer D</div>-->
-<!--      <div class="rest-lap">Lap 4/10</div>-->
-<!--    </div>-->
-<!--    <div class="rest-racer">-->
-<!--      <div class="rest-position">5th</div>-->
-<!--      <div class="rest-name">Racer E</div>-->
-<!--      <div class="rest-lap">Lap 4/10</div>-->
-<!--    </div>-->
-<!--    <div class="rest-racer">-->
-<!--      <div class="rest-position">6th</div>-->
-<!--      <div class="rest-name">Racer F</div>-->
-<!--      <div class="rest-lap">Lap 3/10</div>-->
-
-    <!-- Add more as needed -->
   </div>
   <br/>
   <br>
@@ -86,12 +70,14 @@
   const searchedList = document.getElementById('searched-list');
   const racerNum = document.getElementById("racer_num");
   const searchCard = document.getElementById('search-card');
-  const submitRecord = document.getElementById('submit-record');
+  const submitRecordBtn = document.getElementById('submit-record');
   const addNewRecord = document.getElementById('add-new');
   const raceRecordsSection = document.getElementById('race-records');
   const recordedTime = document.getElementById('recorded-time');
+  let syncRace = undefined;
   let racerData = null;
   let raceRecords = [];
+  let internetCheckInterval = undefined;
 
 
   let searchedinterval = undefined;
@@ -105,6 +91,11 @@
 
   });
 
+  document.addEventListener('beforeunload', () => {
+    if(internetCheckInterval){
+      clearInterval(internetCheckInterval);
+    }
+  });
 
   function getRaceData(){
     const raceData = localStorage.getItem('racer_data');
@@ -124,8 +115,12 @@
     return JSON.parse(localStorage.getItem('race_data'));
   }
 
-  submitRecord.onclick = () => {
-    submitRecord.disabled = true;
+  submitRecordBtn.onclick = () => {
+    sendRecordedData();
+  }
+
+  function sendRecordedData(){
+    disableSubmitRecordBtn();
     const raceData = getRaceDataFromTimePage();
     console.log('raceRecords', raceRecords, raceData);
     fetch('/api/record-race', {
@@ -141,7 +136,7 @@
     }).then((res) => {
       return res.json();
     }).then((data) => {
-      submitRecord.disabled = false;
+      enableSubmitRecordBtn()
       localStorage.setItem('message', data.message);
       localStorage.removeItem('race_data');
       localStorage.removeItem('racer_data');
@@ -149,12 +144,28 @@
     }).catch((err) => {
       showToast(err, 'error');
       console.log('record-race', err);
-      submitRecord.disabled = false;
+      enableSubmitRecordBtn();
     });
   }
 
-  addNewRecord.onclick = () => {
-    if(!raceRecords)return;
+  function enableSubmitRecordBtn(){
+    submitRecordBtn.disabled = false;
+  }
+
+  function disableSubmitRecordBtn(){
+    submitRecordBtn.disabled = true;
+  }
+
+
+  addNewRecord.onclick = function addNewRecordClick() {
+
+    if(isEmpty(racePositionSelector.value)){
+      showToast('Fields cannot be empty!', 'error');
+      return;
+    }
+
+    console.log('racePosition', racePositionSelector.value, racePositionSelector.value);
+    // if(!raceRecords)return;
     const raceIds = raceRecords.map((raceRecord) => raceRecord.race_id);
     const selectedPositions = raceRecords.map((raceRecord) => raceRecord.position);
 
@@ -168,6 +179,7 @@
 
       createNewRunner(racePositionSelector.value, racerData.name, racerData.race_id);
       updateRacerCache();
+      enableSubmitRecordBtn();
     }
 
   }
@@ -182,8 +194,20 @@
 
   }
 
+  function checkInternetConnection(){
+    internetCheckInterval = setInterval(function checkInternet(){
+      console.log('checkInternetConnection', 'checking internet connection');
+        if (navigator.onLine && localStorage.getItem('racer_data') !== null){
+          syncRace.style.display = 'block';
+        }else{
+          syncRace.style.display = 'none';
+        }
+    }, 4000);
+  }
+
 
   function initialLoad(){
+    checkInternetConnection();
     let firstLoad = true;
     for(let i = 0; i < topNav.children.length; i++){
       if(topNav.children[i].classList.contains('active')){
@@ -206,11 +230,17 @@
     if (racerList){
       raceRecords = racerList;
     }
-    console.log('racerList---------->', raceRecords);
-    if(raceRecords){
+
+    if(raceRecords && raceRecords.length > 0){
       raceRecords.forEach((raceRecord) => {
+
         createNewRunner(raceRecord.position, raceRecord.name, raceRecord.race_id);
       });
+      console.log('racerList', 'enableSubmitRecordBtn', raceRecords);
+      enableSubmitRecordBtn();
+    }else{
+      console.log('racerList', 'disableSubmitRecordBtn');
+      disableSubmitRecordBtn()
     }
 
     // Show recorded time
@@ -219,6 +249,7 @@
       recordedTime.textContent = raceData.time;
     }else{
       // No need to continue if there's no race data
+      localStorage.setItem('message', 'No race data found!');
       window.location.replace('/');
     }
   }
@@ -229,9 +260,20 @@
     btnMenu.textContent = 'Home';
     btnMenu.id = 'home'
     btnMenu.onclick = () => {
+      clearInterval(internetCheckInterval)
       window.location.href = '/';
     }
+
+    // Sync local data to backend
+    syncRace = document.createElement(isMobile ? 'a': 'button');
+    syncRace.type = 'button';
+    syncRace.textContent = 'Sync';
+    syncRace.id = 'sync-local-data'
+    syncRace.onclick = () => {
+      sendRecordedData();
+    }
     topNav.appendChild(btnMenu);
+    topNav.appendChild(syncRace);
   }
 
 
@@ -296,7 +338,16 @@
     });
   }
 
+  function isEmpty(value){
+    return value.trim() === '';
+  }
+
+  function isNotEmpty(value){
+    return !isEmpty(value);
+  }
+
   function createNewRunner(racePosition, racerName, raceNumber){
+
     const searchedItem = document.createElement('div');
     searchedItem.className = "rest-racer";
 
@@ -323,7 +374,6 @@
 
     delBtn.onclick = (e) => {
       const raceData = getRaceData();
-      console.log('raceData ------------> 1', raceData);
       const raceRecIds = raceData.map((race) => race.race_id);
       for(let i = 0; i < raceRecordsSection.children.length; i++){
         const raceNum = raceRecordsSection.children[i].children[2].textContent;
@@ -343,6 +393,9 @@
       }
 
       raceRecords = raceData;
+      if(raceRecords.length === 0){
+        disableSubmitRecordBtn()
+      }
       updateRacerCache(raceRecords);
       console.log('raceRecords-raceRecords-', raceData, raceRecords);
 
