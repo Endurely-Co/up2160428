@@ -131,7 +131,7 @@
                 }else{
 
                     console.log('data.user_type', data);
-                    document.cookie = `email=${data.email};`;
+                    document.cookie = `email=${data.email.trim()};`;
                     document.cookie = `user_type=${data.user_type};`;
 
                     console.log('data.user_type', document.cookie);
