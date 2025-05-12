@@ -164,13 +164,27 @@
       return;
     }
 
+
     console.log('racePosition', racePositionSelector.value, racePositionSelector.value);
     // if(!raceRecords)return;
     const raceIds = raceRecords.map((raceRecord) => raceRecord.race_id);
     const selectedPositions = raceRecords.map((raceRecord) => raceRecord.position);
 
+    if(selectedPositions.includes(racePositionSelector.value)){
+      showToast('Position cannot be selected. Please check and try a new position', 'error');
+      return;
+    }
+
+
+
     // ( && !selectedPositions.includes(racePositionSelector.value))
-    if (racerData && !raceIds.includes(racerData.race_id) ){
+    if (racerData){
+
+      if(raceIds.includes(racerData.race_id)){
+        showToast('Racer number cannot be selected. Please check and try a new racer number', 'error');
+        return;
+      }
+
       raceRecords.push({
         name: racerData.name,
         race_id: racerData.race_id,
@@ -269,6 +283,7 @@
     syncRace.type = 'button';
     syncRace.textContent = 'Sync';
     syncRace.id = 'sync-local-data'
+    syncRace.style.display = 'none';
     syncRace.onclick = () => {
       sendRecordedData();
     }
