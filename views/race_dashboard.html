@@ -23,7 +23,9 @@
         });
     } else {
         let prevSocCommand = undefined;
-        const socket = new WebSocket(`ws://${location.hostname}:8081`);
+        let clientId = localStorage.getItem('client_id');
+        const socket = new WebSocket(`ws://${location.hostname}:8081?client_id=${clientId}`);
+
         socket.addEventListener('open', (event) =>{
             console.log('websocket connection open - race dashboard!');
         });
@@ -45,7 +47,11 @@
             const cmdObj = JSON.parse(event.data);
             if (prevSocCommand !== cmdObj.cmd){
                 raceInfo.removeChild(raceInfo.children[raceInfo.children.length - 1]);
-                newParagraph('Race status', cmdObj.cmd === 'start' ? 'Started' : 'Ended');
+                if(localStorage.getItem('racer_status') === 'disqualified') {
+                    newParagraph('Race status', 'Disqualified');
+                }else{
+                    newParagraph('Race status', cmdObj.cmd === 'start' ? 'Started' : 'Ended');
+                }
             }
             prevSocCommand = cmdObj.cmd;
 
@@ -143,14 +149,22 @@
                         newParagraph('Name', race.name);
                         newParagraph('Start Time', race.start_time);
                         newParagraph('Cutoff Time', race.cutoff_time);
-                        console.log('race_started#1', race.race_started)
-                        newParagraph('Race status', race.race_started === 0 ? 'Ended' : race.race_started === null ? 'Not Started' : 'Started');
+                        raceStatusRow(race);
                     }
                 }).catch((err) => {
                 console.log('User not logged inqq', 'error');
             });
         }
         populateCurrentRace();
+
+        function raceStatusRow(race){
+            console.log('race status roow', localStorage.getItem('racer_status'));
+            if(localStorage.getItem('racer_status') === 'disqualified'){
+                newParagraph('Race status', 'Disqualified');
+                return;
+            }
+            newParagraph('Race status', race.race_started === 0 ? 'Ended' : race.race_started === null ? 'Not Started' : 'Started');
+        }
 
     }
 
