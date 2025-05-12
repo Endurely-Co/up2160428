@@ -90,8 +90,8 @@
                 if(data.error){
                     showToast(data.error, 'error');
                 }else{
-                    // showToast('User added successfully',
-                    //     'success '+ data.redirectUrl);
+                    showToast('Account was successfully created. Now log in with your account',
+                        'success');
                     window.location.href =data.redirect_url;
                     form.reset();
                 }
