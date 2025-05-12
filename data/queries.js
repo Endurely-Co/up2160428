@@ -1,5 +1,6 @@
 import database from "./model.js";
 
+const queryTurnOnForeignKey = `PRAGMA foreign_keys = ON;`;
 
 const newRace = `INSERT INTO race(name, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?)`;
 
@@ -13,27 +14,31 @@ const queryRaceStatus = `SELECT race_started, start_time FROM race ORDER BY star
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
-const allRaces = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
+const querySingleRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const queryStartTime = `SELECT start_time, race_started FROM race ORDER BY start_time`;
 
 const queryRaceId = `SELECT id FROM race ORDER BY start_time DESC LIMIT 1`;
 
+const queryRaces = `SELECT * FROM race`;
+
 const updateUserLogin = `UPDATE user SET isLoggedIn = ? WHERE email = ?`;
 
 const registerUser = `INSERT INTO registered_race(user_id, race_id, disqualified) VALUES(?, ?, ?)`;
 
-const updateDisqualifyUser = `UPDATE registered_race SET disqualified = ? WHERE race_id = ?`;
+const updateDisqualifyUser = `UPDATE registered_race SET disqualified = ? WHERE user_id = ?`;
 
 const queryDisqualifiedUserByRacer = `SELECT disqualified FROM registered_race WHERE race_id = ?`;
 
-const queryDisqualifiedUsers = `SELECT disqualified, race_id FROM registered_race`;
+const queryDisqualifiedUsers = `SELECT disqualified, race_id, user_id FROM registered_race`;
 
 const queryRegisteredRaces = `SELECT * FROM registered_race`;
 
 const queryUserRaceRegistered = `SELECT * FROM registered_race WHERE user_id = ?`;
 
-const queryRegisteredRaceById = `SELECT * FROM registered_race WHERE user_id = ?`
+const queryUserForDisqualified = `SELECT disqualified FROM registered_race WHERE user_id = ?`;
+
+const queryRegisteredRaceById = `SELECT * FROM registered_race WHERE user_id = ? AND race_id = ?`;
 // const updateUserRace = `UPDATE race SET racer_id = ? WHERE id = ?`;
 
 const queryForUser = `SELECT * FROM user WHERE email = ?`;
@@ -46,7 +51,7 @@ const queryForOnlyRacers = `SELECT * FROM user WHERE user_type = 'runner' ORDER 
 
 const queryForUserById = `SELECT * FROM user WHERE id = ?`;
 
-const queryCheckedLogIn = `SELECT isLoggedIn, user_type FROM user WHERE email = ?`;
+const queryCheckedLogIn = `SELECT isLoggedIn, user_type, race_id FROM user WHERE email = ?`;
 
 const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
 RETURNING id, name, email, isLoggedIn, user_type, race_id`;
@@ -54,6 +59,8 @@ RETURNING id, name, email, isLoggedIn, user_type, race_id`;
 const queryRacerId = `SELECT race_id FROM race WHERE email = ?`;
 
 const queryRacerById = `SELECT race_id, name FROM user WHERE race_id LIKE ?`;
+
+const queryRacerByRaceId = `SELECT * FROM user WHERE race_id = ?`;
 
 const queryRaceNum = `SELECT race_id FROM user WHERE race_id IS NOT NULL ORDER BY race_id DESC LIMIT 1`;
 
@@ -73,22 +80,25 @@ const queryNewLaps = `SELECT * FROM race_laps`;
 
 const queryUserType = `SELECT user_type FROM user WHERE email = ?`;
 
+const deleteRaceById = `DELETE FROM race WHERE user_id = ?`;
 
-async function setRaceResult(){
-    const racerLocation = await requestRacerPosition();
-    for(let racer in racerLocation){
-        const raceResult = await database.prepare(insertRaceResult);
-        raceResult.get(2, racer.racer_id);
-    }
 
-    return (await database.prepare(queryRaceResults));
+async function checkRacerStatus(email){
+    const isUserDisqualified = await database.prepare(queryUserForDisqualified);
+    const userId = await getUserIdByEmail(email);
+    return isUserDisqualified.get(userId);
+}
+
+async function getRaces(){
+    const races = await database.prepare(queryRaces);
+    return races.all();
 }
 
 async function searchRacerById(query){
     const queryRacer = await database.prepare(queryRacerById);
-    const searchedRacer = await queryRacer.all(`%${query}`);
+   // const searchedRacer =
 
-    return searchedRacer;
+    return queryRacer.all(`%${query}`);
 }
 
 
@@ -121,6 +131,11 @@ async function getNewLaps(){
 async function getRacers(){
     const racers = await database.prepare(queryForOnlyRacers);
     return racers.all();
+}
+
+async function turnOnForeignKeySupport(){
+    database.prepare(queryTurnOnForeignKey);
+    console.log('ALLOWING FOREIGN KEYS');
 }
 
 
@@ -190,8 +205,11 @@ async function getRegisteredRaces(){
 async function getRegisteredRaceById(email){
     const registeredRaces = database.prepare(queryRegisteredRaceById);
     const curUId = await getUserIdByEmail(email);
+    const raceIdQuery = await database.prepare(queryRaceId);
+    const racerId = raceIdQuery.get().id;
+    console.log('curUId', racerId);
     //const registeredRace = registeredRaces.get(curUId);
-    return registeredRaces.get(curUId);
+    return registeredRaces.get(curUId, racerId);
 }
 
 async function updateRacerPosition(latitude, longitude, racer_id) {
@@ -289,8 +307,8 @@ function makeRacerPosition(racer, user){
     };
 }
 
-async function requestAllRace(){
-    const races = await database.prepare(allRaces);
+async function requestSingleRace(){
+    const races = await database.prepare(querySingleRace);
     return races.all();
 }
 
@@ -321,11 +339,17 @@ function getRaceId(racerIds){
 async function disqualifyRunner(status, racerId){
     // 0: disqualified
     // 1: not disqualified
-    console.log('registerRace--', status, racerId);
     const registerRace = database.prepare(updateDisqualifyUser);
-    registerRace.run(status, racerId);
+    const userByRaceIdQuery = await database.prepare(queryRacerByRaceId);
+    const user = userByRaceIdQuery.get(racerId);
+    if (user.user_type !== 'volunteer' || user.user_type !== 'organiser') {
+        return {
+            error: "You don't have permission to perform operations.",
+        }
+    }
+    registerRace.run(status, user.id);
     return {
-        message: `${racerId} has been successfully disqualified`,
+        message: status === 1 ? `${racerId} has been successfully disqualified`: `${racerId} is back in the race`
     }
 }
 
@@ -368,11 +392,12 @@ async function checkLoggedIn(email) {
             redirect_url: '/login'
         }
     }
-    const {user_type, hasLoggedIn} = await database.prepare(queryCheckedLogIn).get(email);
+    const {user_type, hasLoggedIn, race_id} = await database.prepare(queryCheckedLogIn).get(email);
     return {
         user_logged_in: hasLoggedIn,
         user_type: user_type,
-        redirect_url: '/'
+        redirect_url: '/',
+        race_id: race_id
     };
 }
 
@@ -407,31 +432,12 @@ async function invalidateUser(email) {
 }
 
 
-
-async function getUserType(email){
-    const query = database.prepare(queryUserType);
-    const userByEmails = query.get(email);
-    return userByEmails[0];
-}
-
-
 async function getUserIdByEmail(email){
     const query = database.prepare(queryForUserIdByEmail);
     const user = query.get(email)
     return user.id;
 }
 
-async function getUserByEmail(email){
-    const query = await database.prepare(queryForUser);
-    const user = query.get(email);
-    return {
-        name: user.name,
-        email: user.email,
-        user_type: user.user_type,
-        id: user.id,
-        isLoggedIn: user.isLoggedIn,
-    };
-} // file:///Users/admin/WebstormProjects/new_webprog/data/queries.js:200:20
 
 async function changeUserStatus(email, isLoggedIn = true){
     const query = database.prepare(queryForUser);
@@ -459,14 +465,14 @@ export default {
     createNewRace, changeUserStatus,
     requestLatestRace, createNewUser,
     checkLoggedIn, invalidateUser,
-    requestAllRace, requestRacerPosition,
-    updateRacerPosition, getAllUsers,
-    getUserByEmail, getUserById: getUserIdByEmail, registerRace,
+    requestSingleRace, requestRacerPosition, getAllUsers,
+    getUserById: getUserIdByEmail, registerRace,
     getRegisteredRaces, getRegisteredRaceById,
     getAllRacePosition, updateStartRace,
     getRacers, requestAllRacers, updateEndRace,
     getNewLaps, getRaceStartTime,
     getRaceStatus, hasRegisteredForRace,
     searchRacerById, recordLaps,
-    disqualifyRunner, getDisqualifiedRacers
+    disqualifyRunner, getDisqualifiedRacers,
+    getRaces, checkRacerStatus
 };
