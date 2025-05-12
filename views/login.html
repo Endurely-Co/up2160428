@@ -25,12 +25,6 @@
         <label for="email"><b>Email Address</b></label>
         <input type="text" placeholder="Enter Email" id="email" name="email" required>
 
-        <label for="name"><b>Full name</b></label>
-        <input type="text" id="name" placeholder="Enter Full Name" name="name" required>
-
-        <!--        <label for="psw"><b>Password</b></label>-->
-        <!--        <input type="password" placeholder="Enter Password" name="psw" required>-->
-
         <button type="submit" class="def-button">Sign In</button>
     </div>
 
@@ -113,8 +107,7 @@
         e.preventDefault();
 
         const formData = {
-            email: document.getElementById('email').value,
-            name: document.getElementById('name').value
+            email: document.getElementById('email').value
         }
 
         fetch('/api/login', {
@@ -132,7 +125,7 @@
                     showToast(data.error, 'error');
                 }else{
 
-                    console.log('data.user_type', data.user_type);
+                    console.log('data.user_type', data);
                     document.cookie = `email=${data.email};`;
                     document.cookie = `user_type=${data.user_type};`;
 
