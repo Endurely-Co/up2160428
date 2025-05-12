@@ -72,7 +72,7 @@
         console.log('userType', userType);
 
         const formData = {
-            email: document.getElementById('email').value,
+            email: document.getElementById('email').value.trim(),
             name: document.getElementById('name').value,
             user_type: userType.value,
         }
