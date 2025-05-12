@@ -146,10 +146,12 @@
     function submitRecords(){
       const userType = getCookie('user_type');
       if (userType === 'organiser'){
-        for (let i = 0; i < topNav.children.length; i++) {
-          topNav.children[i].style.display = 'none';
-        }
-        window.location.href = '/record-race';
+        // for (let i = 0; i < topNav.children.length; i++) {
+        //   topNav.children[i].style.display = 'none';
+        // }
+
+        // todo: return this
+       window.location.href = '/record-race';
       }else{
         // show race ended screen
         timer.textContent = 'Race Ended';
@@ -166,6 +168,7 @@
 
     async function startTimer() {
       if(!isRunning && !intervalId){
+        console.log(`startTimer -------------> startTimer(${isRunning})`);
         let nowTime = Date.now();
         //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
         updateStartTime(nowTime); // Query time and start
@@ -253,22 +256,23 @@
         return response.json();
       }).then(function(startTime) {
 
-        if(startTime.start_time === null){
+        if(startTime.recorded_start_time === null){
           console.log('race_started ------>', 'START TIME IS NOT STARTED');
           startBtn.disabled = true;
           return;
         }
 
-        if (startTime.start_time.split('-')[0] === 'NaN'
-                || startTime.start_time.split(':')[startTime.start_time.length -1] === '00') return;
+        if (startTime.recorded_start_time.split('-')[0] === 'NaN'
+                || startTime.recorded_start_time.split(':')[startTime.recorded_start_time.length -1] === '00') return;
 
         console.log('race_started ------>', startTime.race_started)
         if(startTime.race_started === 1){
           startBtn.textContent = "Finish"
 
           //race.start_time.start_time
-          let nowTime = new Date(startTime.start_time).getTime();
-          console.log("nowTime", nowTime, startTime.start_time);
+          let nowTime = new Date(startTime.recorded_start_time).getTime();
+          console.log("nowTime", nowTime, startTime.recorded_start_time);
+          console.log('updateStartRace --->>', startTime.recorded_start_time);
           //startTime = nowTime.start_time.start_time.split('-')[0] === 'NaN' ? Date.now() : new Date(nowTime.start_time.start_time).getTime();
           updateStartTime(nowTime); // Query time and start
           startedTime = nowTime  - elapsedTime;
@@ -297,7 +301,7 @@
       }));
       updateEndTime(endTime);
       updateClock(true);
-      setInterval(submitRecords, 500);
+      setTimeout(submitRecords, 500);
     }
 
 
