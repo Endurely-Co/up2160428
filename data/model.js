@@ -35,7 +35,8 @@ const initDatabase = `
         city VARCHAR(100)  NOT NULL,
         email        VARCHAR(50) NOT NULL,
         race_ended   BOOLEAN DEFAULT 0,
-        race_started INTEGER DEFAULT -1
+        race_started INTEGER DEFAULT -1,
+        recorded_start_time   DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
     
