@@ -64,7 +64,8 @@
     let prevSocCommand = undefined;
     let cachedLaps = 'cachedLaps';
 
-    const socket = new WebSocket(`ws://${location.hostname}:8081`);
+    let clientId = localStorage.getItem('client_id');
+    const socket = new WebSocket(`ws://${location.hostname}:8081?client_id=${clientId}`);
 
 
     // lapseBtn.addEventListener('click', addNewLapse);
@@ -102,6 +103,7 @@
     }
 
     socket.addEventListener('message', (event) =>{
+      if (localStorage.getItem('racer_status') === 'disqualified')return;
       const cmdObj = JSON.parse(event.data);
       if (cmdObj.elapse_time !== undefined) {
         elapsedTime = cmdObj.elapse_time;

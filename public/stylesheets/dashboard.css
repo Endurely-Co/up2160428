@@ -1,13 +1,12 @@
-.dashboard{
+.dashboard {
     width: 100vh;
 }
 
-
-.time-container{
+.time-container {
     align-content: center;
 }
 
-.timer{
+.timer {
     font-family: 'Times New Roman', Times, serif;
     font-size: 10vw;
     text-align: center;
@@ -15,7 +14,7 @@
     height: fit-content;
 }
 
-.controls{
+.controls {
     align-content: center;
     display: flex;
     justify-content: center;
@@ -24,16 +23,15 @@
     gap: 15px;
 }
 
-
-.controls.hide{
+.controls.hide {
     visibility: hidden;
 }
 
-.controls.show{
+.controls.show {
     visibility: visible;
 }
 
-.ctr-button{
+.ctr-button {
     width: 10vw;
     height: 10vw;
     max-width: 90px;
@@ -53,24 +51,14 @@
     padding: 10px;
 }
 
-
-.ctr-button.start{
+.ctr-button.start {
     background-color: green;
 }
 
-.ctr-button.start:disabled{
+.ctr-button.start:disabled {
     background-color: #81C784;
     cursor: not-allowed;
 }
-
-/*.ctr-button.stop{*/
-/*    background-color: red;*/
-/*}*/
-
-/*.ctr-button.lap{*/
-/*    background-color: yellow;*/
-/*    color: black;*/
-/*}*/
 
 ul {
     list-style-type: none;
@@ -78,19 +66,16 @@ ul {
     margin: 0;
 }
 
-
 ol {
-    /* numeric */
-    counter-reset: li; /* Initiate a counter */
-    list-style: none; /* Remove default numbering */
-    *list-style: decimal; /* Keep using default numbering for IE6/7 */
+    counter-reset: li;
+    list-style: none;
     font: 15px 'trebuchet MS', 'lucida sans';
     padding: 0;
     margin-bottom: 4em;
-    text-shadow: 0 1px 0 rgba(255,255,255,.5);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
 }
 
-.rounded-list{
+.rounded-list {
     position: relative;
     display: block;
     padding: 10px;
@@ -100,21 +85,4 @@ ol {
     text-decoration: none;
     border-radius: .3em;
     font-weight: bold;
-    /*transition: all .3s ease-out;*/
 }
-/*@property --num {*/
-/*    syntax: '<integer>';*/
-/*    initial-value: 0;*/
-/*    inherits: false;*/
-/*}*/
-
-/*p {*/
-/*    transition: --num 1s;*/
-/*    counter-reset: num var(--num);*/
-/*}*/
-/*p:hover {*/
-/*    --num: 10000;*/
-/*}*/
-/*p::after {*/
-/*    content: counter(num);*/
-/*}*/

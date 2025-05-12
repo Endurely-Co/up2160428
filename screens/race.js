@@ -11,7 +11,7 @@ router.get('/dashboard', (req, res) => {
 });
 
 router.get('/timer', (req, res) => {
-    res.render('timer', { title: 'Race Timer' });
+    res.render('timer', { title: 'Race time' });
 });
 
 router.get('/race-board', (req, res) => {

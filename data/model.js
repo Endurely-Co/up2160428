@@ -66,6 +66,8 @@ const initDatabase = `
         laps INTEGER NOT NULL,
         FOREIGN KEY(racer_id) REFERENCES race_laps(id)
     );
+
+    PRAGMA foreign_keys = ON; -- Support foreign key
 `
 
 database.exec(initDatabase);

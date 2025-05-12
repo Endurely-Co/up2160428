@@ -14,7 +14,7 @@ router.get('/users', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     try{
-        let { email, name} = req.body; // remove name from login
+        let { email} = req.body; // remove name from login
         const result = await db.changeUserStatus(email);
         result['redirectUrl'] = '/';
         cache.setUserType(result.user_type)

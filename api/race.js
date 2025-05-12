@@ -1,8 +1,6 @@
 import express, {json} from 'express';
 const router = express.Router();
 import db from '../data/queries.js';
-import cache from "../data/cache.js";
-import queries from "../data/queries.js";
 
 router.get('/current-race', async (req, res) => {
     try{
@@ -39,8 +37,9 @@ router.get('/user-type', async function userMenuByType(req, res) {
         const hasUserRegistered = await db.hasRegisteredForRace(email);
         console.log('userType_userType', userType);
         const response = {'menus': []};
-        const timer = {id: 'stop-watch', name: 'Stop watch', page: 'timer'};
-        let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'}
+        const timer = {id: 'stop-watch', name: 'Race Timer', page: 'timer'};
+        let raceData = {id: 'my-race', name: 'My race', page: 'dashboard'};
+        const raceBoard =  {id: 'race-board', name: 'Race board', page: 'race-board'}
         if(userType === 'runner'){
             response['menus'].push(raceData);
             // Show timer tab only if the user has registered for the race
@@ -51,7 +50,7 @@ router.get('/user-type', async function userMenuByType(req, res) {
             raceData['id'] = 'cur-race';
             raceData['name'] = 'Current Race';
             const menus = [
-                timer,raceData]
+                timer,raceData, raceBoard]
             menus.forEach((menu) => {
                 response['menus'].push(menu)
             });
@@ -59,8 +58,7 @@ router.get('/user-type', async function userMenuByType(req, res) {
             raceData['id'] = 'cur-race';
             raceData['name'] = 'Current Race';
             [timer,raceData,
-                {id: 'new-race', name: 'New Race', page: 'new-race'},
-                {id: 'race-board', name: 'Participants', page: 'race-board'}]
+                {id: 'new-race', name: 'New Race', page: 'new-race'},raceBoard]
                 .forEach((menu) => {
                     response['menus'].push(menu)
                 });
@@ -76,8 +74,12 @@ router.get('/user-type', async function userMenuByType(req, res) {
 });
 // requestRacerPosition
 router.get('/racers', async (req, res) => {
-    const racers = await db.requestAllRacers();
-    return res.status(200).json(racers);
+    try {
+        const racers = await db.requestAllRacers();
+        return res.status(200).json(racers);
+    }catch (e) {
+        return res.status(500).send({error: e});
+    }
 });
 
 router.get('/race-status', async function raceStatus(req, res) {
@@ -130,8 +132,13 @@ router.put('/end-race', async (req, res) => {
     return res.status(200).json(startedRace);
 });
 
-router.get('/races', async (req, res) => {
-    const races = await db.requestAllRace();
+router.get('/single-race', async function singleRace(req, res) {
+    const races = await db.requestSingleRace();
+    return res.status(200).json(races)
+});
+
+router.get('/races', async function singleRace(req, res) {
+    const races = await db.getRaces();
     return res.status(200).json(races)
 });
 
@@ -156,17 +163,6 @@ async function newRace(req, res){
         res.status(500).send({error: error.message});
     }
 }
-
-// router.post('/racer-position', async (req, res) => {
-//     if(cache.getUserType() === 'runner'){
-//         const {latitude, longitude} = req.body;
-//         const racer_id = await queries.getUserById(email);
-//         const racerPosition = await db.updateRacerPosition(latitude, longitude,
-//             racer_id);
-//         return res.status(200).json(racerPosition);
-//     }
-//     return res.status(400).json({message: "User is not a runner"});
-// });
 
 
 
@@ -210,14 +206,32 @@ router.post('/disqualify', async function doDisqualifyRacer(req, res) {
         const result = await db.disqualifyRunner(status, racer_id);
         return res.status(200).json(result);
     }catch (e) {
+        console.log(e);
         return res.status(500).send({error: e.message});
     }
 });
 
+//checkRacerStatus
+
+router.post('/racer-status', async function racerStatus(req, res)  {
+    try{
+        const {email} = req.body;
+        const racerStatus = await db.checkRacerStatus(email);
+        console.log('racerStatus ---->', racerStatus);
+        return res.status(200).json({
+            data: {
+                is_disqualified: racerStatus.disqualified === 1
+            }
+        });
+    }catch (e) {
+        return res.status(500).send({error: e.message});
+    }
+});
 
 router.get('/disqualify', async function getDisqualifiedRacer(req, res)  {
-    const disqualifiedRacers = await db.getDisqualifiedRacers();
+
     try{
+        const disqualifiedRacers = await db.getDisqualifiedRacers();
         return res.status(200).json({
             data: disqualifiedRacers
         });

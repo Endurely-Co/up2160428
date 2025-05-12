@@ -39,3 +39,17 @@
     from {bottom: 30px; opacity: 1;}
     to {bottom: 0; opacity: 0;}
 }
+
+@media (max-width: 768px) {
+    #snackbar {
+        min-width: 200px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    #snackbar {
+        min-width: 150px;
+        font-size: 14px;
+    }
+}
