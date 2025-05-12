@@ -149,17 +149,18 @@ router.post('/new-race', async (req, res) => {
 
 
 async function newRace(req, res){
-    const {name, start_time, cutoff_time, email} = req.body;
+    const {name, start_time, email, address, postcode, city} = req.body;
     console.log(req.body);
     try{
         const result = await db.createNewRace(email,
-            name, cutoff_time, start_time);
+            name, 0, start_time, address, postcode, city);
         if(result.error){
             return res.status(404).json({ error: result.error.message });
         }
 
         res.status(201).json(req.body);
     }catch (error){
+        console.log(error);
         res.status(500).send({error: error.message});
     }
 }
@@ -167,11 +168,15 @@ async function newRace(req, res){
 
 
 router.get('/registered-race', async (req, res) => {
-    const email = req.query.email;
-    const raceById = await db.getRegisteredRaceById(email);
-    return res.status(200).send({
-        registered: raceById !== undefined
-    });
+    try{
+        const email = req.query.email;
+        const raceById = await db.getRegisteredRaceById(email);
+        return res.status(200).send({
+            registered: raceById !== undefined
+        });
+    }catch (e) {
+        return res.status(500).send({error: 'Cannot not get registered race'});
+    }
 });
 
 router.get('/runner-positions', async (req, res) => {

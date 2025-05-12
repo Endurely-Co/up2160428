@@ -115,7 +115,11 @@
         }).then((res) => res.json())
             .then((response) => {
                 if (response.error) {
-                    showToast(response.error, 'error');
+                    // Silent the error if disqualified doesn't exist
+                    // This is will to happen if the user is yet to register for a race
+                    if (!response.error.includes('disqualified')){
+                        showToast(response.error, 'error');
+                    }
                     return;
                 }
 

@@ -96,19 +96,19 @@
             });
         }
 
-        function showToast(message, type){
-            toast.textContent = message;
-            if(type === 'success'){
-                toast.style.backgroundColor = 'green';
-            }else{
-                toast.style.backgroundColor = 'red';
-            }
-            toast.className = 'toast show';
-
-            setTimeout((event) => {
-                toast.className = 'toast';
-            }, 3000);
-        }
+        // function showToast(message, type){
+        //     toast.textContent = message;
+        //     if(type === 'success'){
+        //         toast.style.backgroundColor = 'green';
+        //     }else{
+        //         toast.style.backgroundColor = 'red';
+        //     }
+        //     toast.className = 'toast show';
+        //
+        //     setTimeout((event) => {
+        //         toast.className = 'toast';
+        //     }, 3000);
+        // }
 
         periodicRacerUpdate();
 
@@ -138,9 +138,6 @@
                         }
 
                         // createNewRunner('1', racer.name, racer.race_id, racer.disqualified);
-                    }else{
-                        // Not racer
-                        showToast('No racers found.', 'error');
                     }
                 })
                 .catch((error) => {

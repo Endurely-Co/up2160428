@@ -2,7 +2,14 @@ import database from "./model.js";
 
 const queryTurnOnForeignKey = `PRAGMA foreign_keys = ON;`;
 
-const newRace = `INSERT INTO race(name, start_time, cutoff_time, email, race_started) VALUES(?, ?, ?, ?, ?)`;
+/*
+ address VARCHAR(100)  NOT NULL,
+        postcode VARCHAR(15)  NOT NULL,
+        city VARCHAR(100)  NOT NULL,
+ */
+
+const newRace = `INSERT INTO race(name, start_time, cutoff_time, email, address, postcode, city)
+VALUES(?, ?, ?, ?, ?, ?, ?)`;
 
 // race_started is used for start and pause race
 // race_started True means the race is still running False is the race has been paused.
@@ -14,7 +21,7 @@ const queryRaceStatus = `SELECT race_started, start_time FROM race ORDER BY star
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
-const querySingleRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
+const queryLatestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const queryStartTime = `SELECT start_time, race_started FROM race ORDER BY start_time`;
 
@@ -308,7 +315,7 @@ function makeRacerPosition(racer, user){
 }
 
 async function requestSingleRace(){
-    const races = await database.prepare(querySingleRace);
+    const races = await database.prepare(queryLatestRace);
     return races.all();
 }
 
@@ -371,14 +378,18 @@ async function registerRace(email){
     }
 }
 
-async function createNewRace(email, name, cutoff_time, start_time){
+async function createNewRace(email, name, cutoff_time, start_time, address, postcode, city){
     const race = await database.prepare(newRace);
-    race.get(name, start_time, cutoff_time,  email);
+    race.get(name, start_time, cutoff_time,  email, address, postcode, city);
+    // name, start_time, cutoff_time, email, address, postcode, city
     return {
         email : email,
         name : name,
         cutoff_time : cutoff_time,
         start_time : start_time,
+        address : address,
+        postcode : postcode,
+        city : city
     }
 }
 

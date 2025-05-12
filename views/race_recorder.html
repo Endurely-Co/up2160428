@@ -140,6 +140,7 @@
       localStorage.setItem('message', data.message);
       localStorage.removeItem('race_data');
       localStorage.removeItem('racer_data');
+      //todo: wait a few minute before exiting
       window.location.replace('/');
     }).catch((err) => {
       showToast(err, 'error');

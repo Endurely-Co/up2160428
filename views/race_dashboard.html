@@ -147,8 +147,9 @@
                         }
                         const race = data.data[0];
                         newParagraph('Name', race.name);
-                        newParagraph('Start Time', race.start_time);
-                        newParagraph('Cutoff Time', race.cutoff_time);
+                        newParagraph('Start Time', race.start_time); // address, postcode, city
+                        newParagraph('City', race.city);
+                        newParagraph('Address', `${race.address}, ${race.postcode}`);
                         raceStatusRow(race);
                     }
                 }).catch((err) => {
@@ -158,12 +159,15 @@
         populateCurrentRace();
 
         function raceStatusRow(race){
-            console.log('race status roow', localStorage.getItem('racer_status'));
             if(localStorage.getItem('racer_status') === 'disqualified'){
+                registerButton.disabled = true;
                 newParagraph('Race status', 'Disqualified');
                 return;
             }
-            newParagraph('Race status', race.race_started === 0 ? 'Ended' : race.race_started === null ? 'Not Started' : 'Started');
+
+            // The user should only be able to register if the race is yet to start
+            registerButton.disabled = race.race_started !== -1;
+            newParagraph('Race status', race.race_started === 0 ? 'Ended' : race.race_started === -1 ? 'Not Started' : 'Started');
         }
 
     }

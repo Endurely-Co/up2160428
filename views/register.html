@@ -90,8 +90,7 @@
                 if(data.error){
                     showToast(data.error, 'error');
                 }else{
-                    showToast('Account was successfully created. Now log in with your account',
-                        'success');
+                    localStorage.setItem('message', 'Account was successfully created. Now log in with your account');
                     window.location.href =data.redirect_url;
                     form.reset();
                 }

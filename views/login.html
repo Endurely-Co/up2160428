@@ -92,6 +92,11 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         checkLogin();
+
+        if (localStorage.getItem('message')){
+            showToast(localStorage.getItem('message'), 'success');
+            localStorage.removeItem('message');
+        }
     });
 
     signupBtn.addEventListener('click', () => {
