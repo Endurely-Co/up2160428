@@ -13,7 +13,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?)`;
 
 // race_started is used for start and pause race
 // race_started True means the race is still running False is the race has been paused.
-const updateRaceStart = `UPDATE race SET race_started = ?, start_time = ? WHERE id = ?`;
+const updateRaceStart = `UPDATE race SET race_started = ?, recorded_start_time = ? WHERE id = ?`;
 
 const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE id = ?`;
 
@@ -23,7 +23,7 @@ const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const queryLatestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
-const queryStartTime = `SELECT start_time, race_started FROM race ORDER BY start_time`;
+const queryStartTime = `SELECT recorded_start_time, race_started FROM race ORDER BY start_time LIMIT 1`;
 
 const queryRaceId = `SELECT id FROM race ORDER BY start_time DESC LIMIT 1`;
 
@@ -151,6 +151,7 @@ async function updateStartRace(startTime, started){
     try {
         const raceById = await database.prepare(queryRaceId);
         const updateRace = await database.prepare(updateRaceStart);
+
         updateRace.run(started ? 1 : 0, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
         return {
             message: 'Race started'
@@ -172,7 +173,7 @@ async function getRaceStartTime(){
         return {start_time: null, end_time: null};
     }
     return {
-        start_time: startTimes[0].start_time,
+        recorded_start_time: startTimes[0].recorded_start_time,
         race_started: startTimes[0].race_started
     }
 }
@@ -193,6 +194,7 @@ async function updateEndRace(endTime){
         const updateRace = await database.prepare(updateRaceEnd);
         // reset the start race '1970-01-01 01:00:00'
         updateRace.run(0, isoToSQLiteDatetime(endTime), raceById.all()[0].id);
+        console.log('Race updated successfully.',raceById.all());
         return {
             message: 'Race ended'
         };
