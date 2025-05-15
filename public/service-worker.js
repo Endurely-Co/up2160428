@@ -1,5 +1,14 @@
 const CACHE_NAME = 'express-pwa-v1';
-const urlsToCache = ['/', '/stylesheets/styles.css', '/script.js'];
+const urlsToCache = ['/',
+    '/stylesheets/styles.css',
+    '/script.js',
+    '/new-race',
+   ' /dashboard',
+    '/timer',
+    '/race-board',
+    '/record-race',
+    '/race-records'
+];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
