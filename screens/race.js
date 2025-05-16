@@ -19,7 +19,7 @@ router.get('/race-board', (req, res) => {
 });
 
 router.get('/record-race', (req, res) => {
-    res.render('race_recorder', { title: 'Race Board' });
+    res.render('race_recorder', { title: 'Race Recorder' });
 });
 
 router.get('/race-records', (req, res) => {

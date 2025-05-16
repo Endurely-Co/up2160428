@@ -3,13 +3,13 @@
     transition: 0.3s;
     width: 46.4%;
     z-index: 9999;
-    position: absolute; /* Key: takes it out of the normal flow */
+    position: absolute;
     background-color: white;
 }
 
 .input-container input {
     position: relative;
-    z-index: 1; /* Lower than .card */
+    z-index: 1;
 }
 
 .card:hover {

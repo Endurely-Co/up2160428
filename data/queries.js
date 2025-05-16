@@ -44,7 +44,9 @@ const queryRegisteredRaceById = `SELECT * FROM registered_race WHERE user_id = ?
 
 const queryForUser = `SELECT * FROM user WHERE email = ?`;
 
-const queryForUserIdByEmail = `SELECT id FROM user WHERE email = ?`;
+const queryForUserIdByEmail = `SELECT id, user_type FROM user WHERE email = ?`;
+
+const updateUserRaceId = `UPDATE user SET race_id = ? WHERE email = ?`;
 
 const queryForAllUsers = `SELECT * FROM user`;
 
@@ -117,12 +119,12 @@ async function hasRegisteredForRace(email) {
     return !!reg;
 }
 
-async function recordLaps(racerPos, raceTime, racerId, raceId) {
+async function recordRace(racerPos, raceTime, racerId, raceId) {
     await runAsync(insertNewLaps, [racerPos, raceTime, racerId, raceId]);
-    return { message: 'Laps record added successfully.' };
+    return { message: 'Race record added successfully.' };
 }
 
-async function getNewLaps() {
+async function getRaceRecords() {
     return allAsync(queryNewLaps);
 }
 
@@ -159,17 +161,28 @@ async function createNewRace(email, name, cutoff_time, start_time, address, post
 
 async function createNewUser(email, name, userType) {
     try {
-        let lastRaceNumber = null;
-        if (userType === 'runner') {
-            const lastRace = await getAsync(queryRaceNum);
-            lastRaceNumber = lastRace ? getRaceId([lastRace]) : null;
-        }
-        const result = await runAsync(insertNewUser, [name, email, 'false', userType, lastRaceNumber]);
+        const result = await runAsync(insertNewUser, [name, email, 'false', userType, null]);
         // To get inserted row id or data, you'd run a SELECT afterwards or use this.lastID
-        return { id: result.lastID, name, email, racer_id: lastRaceNumber };
+        return { id: result.lastID, name, email, racer_id: null };
     } catch (err) {
         return { error: err.message };
     }
+}
+
+function getRaceId(racerIds){
+    const charLimit = 4
+    if(racerIds.length === 0){
+        return '0001';
+    }
+    const raceIdInt = parseInt(racerIds[0].race_id) + 1;
+    const zeroCount =
+        charLimit - raceIdInt.toString().length; // v = 2, 0002
+    let raceId = ''
+    for (let i = 0; i < zeroCount; i++) {
+        raceId += '0';
+    }
+
+    return `${raceId}${raceIdInt}`;
 }
 
 async function getUserIdByEmail(email) {
@@ -257,10 +270,17 @@ async function requestSingleRace() {
 async function registerRace(email) {
     const race = await requestLatestRace();
     const user = await getAsync(queryForUserIdByEmail, [email]);
+    let lastRaceNumber = null;
+    if (user.user_type === 'runner') {
+        const lastRace = await allAsync(queryRaceNum);
+        lastRaceNumber = getRaceId(lastRace);
+        console.log('lastRaceNumber', lastRaceNumber, lastRace, user.user_type);
+    }
+    await runAsync(updateUserRaceId, [lastRaceNumber, email])
     await runAsync(registerUser, [user.id, race[0].id, 0]);
     return {
         message: 'Race was registered',
-        racer_id: race[0].id
+        racer_id: lastRaceNumber
     };
 }
 
@@ -268,14 +288,16 @@ async function getDisqualifiedRacers() {
     return allAsync(queryDisqualifiedUsers);
 }
 
-async function disqualifyRunner(status, racerId) {
-    const user = await getAsync(queryRacerByRaceId, [racerId]);
+// use user_id to disqualify the user
+async function disqualifyRunner(status, userId, racerId, email) {
+    const user = await getAsync(queryForUser, [email]); //email
     if (user.user_type !== 'volunteer' && user.user_type !== 'organiser') {
         return {
             error: "You don't have permission to perform operations.",
         };
     }
-    await runAsync(updateDisqualifyUser, [status, user.id]);
+    console.log('user_in_id', racerId, status);
+    await runAsync(updateDisqualifyUser, [status, racerId]);
     return {
         message:
             status === 1
@@ -308,22 +330,31 @@ async function requestRacerPosition() {
 async function requestAllRacers() {
     const disqualified = await allAsync(queryDisqualifiedUsers);
     const racers = await allAsync(queryRegisteredRaces);
+    let userIds = [];
 
     const racersData = await Promise.all(
         racers.map(async (racer) => {
+            console.log('requestAllRacers1', `${racer.user_id}`);
+            userIds.push(racer.user_id);
             return getAsync(queryForUserById, [racer.user_id]);
         })
     );
 
-    const result = racersData.map((racer, i) => ({
-        id: racer.id,
-        name: racer.name,
-        email: racer.email,
-        isLoggedIn: racer.isLoggedIn,
-        user_type: racer.user_type,
-        race_id: racer.race_id,
-        disqualified: disqualified[i] ? disqualified[i].disqualified : null,
-    }));
+    let index = -1;
+    const result = racersData.map( function mapToResponse(racer, i) {
+        index += 1;
+        console.log('requestAllRacers', `${userIds[index]}`);
+        return {
+            id: racer.id,
+            name: racer.name,
+            email: racer.email,
+            isLoggedIn: racer.isLoggedIn,
+            user_type: racer.user_type,
+            race_id: racer.race_id,
+            user_id: userIds[index],
+            disqualified: disqualified[i] ? disqualified[i].disqualified : null,
+        }
+    });
 
     return { racers: result };
 }
@@ -387,8 +418,8 @@ export default {
     searchRacerById, disqualifyRunner,
     getRacerId, registerRace,
     hasRegisteredForRace, requestRacerPosition,
-    recordLaps, requestAllRacers,
-    getNewLaps, getRaceStatus,
+    recordRace, requestAllRacers,
+    getRaceRecords, getRaceStatus,
     getRacers, getAllUsers, updateRacerPosition,
     updateStartRace, getRegisteredRaceById,
     updateEndRace, getRegisteredRaces,

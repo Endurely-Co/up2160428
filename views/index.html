@@ -46,12 +46,15 @@
     const toast = document.getElementById('toast');
     const content = document.getElementById("content");
     const myLinks = document.getElementById("my-links");
+
     const DISQUALIFIED_MSG = "Sorry, you have been disqualified from the race";
+    const RACER_STATUS = 'racer_status';
 
 
     let selectedTabId = undefined;
     const SELECTED_PAGE_KEY = 'selected_page'
     let START_TAB = isMobile ? 0 : 1
+
 
     let currentPage = undefined;
 
@@ -126,7 +129,7 @@
                 console.log('response --->', response.data);
                 if(response.data.is_disqualified){
                     alert(DISQUALIFIED_MSG);
-                    localStorage.setItem('racer_status', 'disqualified');
+                    localStorage.setItem(RACER_STATUS, 'disqualified');
                 }
 
             }).catch((err) => {
@@ -181,6 +184,10 @@
         }
 
         addMenus();
+
+        if(localStorage.getItem(RACER_STATUS) === 'disqualified'){
+            checkUserRaceStatus(getEmail());
+        }
 
     });
 

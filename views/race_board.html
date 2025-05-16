@@ -64,14 +64,14 @@
 
 
 
-        function disqualifyUser(racerId, status){
+        function disqualifyUser(userId, racerId, status){
             console.log('disqualifying user: ' + racerId);
             fetch('/api/disqualify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({racer_id: racerId, status: status})
+                body: JSON.stringify({user_id: userId, racer_id: racerId, status: status, email: getEmail()})
             }).then(function(response) {
                 return response.json();
             }).then(function(data) {
@@ -133,8 +133,8 @@
                     if (racerList.racers.length > 0) {
                         for(let i = 0; i < racerList.racers.length; i++){
                             const racer = racerList.racers[i];
-                            console.log('racer----racer', racer.disqualified);
-                            createNewRunner(i + 1, racer.name, racer.race_id, racer.disqualified);
+                            console.log('racer----racer', racer.disqualified, racer.user_id);
+                            createNewRunner(racer.user_id, i + 1, racer.name, racer.race_id, racer.disqualified);
                         }
 
                         // createNewRunner('1', racer.name, racer.race_id, racer.disqualified);
@@ -148,7 +148,7 @@
 
         // Create each row
 
-        function createNewRunner(racePosition, racerName, raceNumber, isDisqualified){
+        function createNewRunner(userId, racePosition, racerName, raceNumber, isDisqualified){
 
             const racerItem = document.createElement('div');
             racerItem.className = "rest-racer";
@@ -183,7 +183,7 @@
                     btnText: 'Confirm',
                     message: `Are you sure you want to disqualify ${raceNumber}?`
                 }, function onActionClick(){
-                    disqualifyUser(raceNumber, 1);
+                    disqualifyUser(userId, raceNumber, 1);
                 });
 
                 // const raceData = getRaceData();

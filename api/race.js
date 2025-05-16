@@ -190,7 +190,7 @@ router.post('/record-race', async (req, res) => {
     // racerPos, lapsTime, racerId, raceId
     for (let i =0; i< runners.length; i++){
         const runner = runners[i];
-        const racerPosition = await db.recordLaps(runner.position,
+        const racerPosition = await db.recordRace(runner.position,
             race_time, runner.race_id, race_id);
         raceLaps.push(racerPosition);
     }
@@ -201,14 +201,14 @@ router.post('/record-race', async (req, res) => {
 });
 
 router.get('/records', async (req, res) => {
-    const racerPosition = await db.getNewLaps();
+    const racerPosition = await db.getRaceRecords();
     return res.status(200).json(racerPosition);
 });
 
 router.post('/disqualify', async function doDisqualifyRacer(req, res) {
-    const {status, racer_id} = req.body;
+    const {status, user_id, racer_id, email} = req.body;
     try{
-        const result = await db.disqualifyRunner(status, racer_id);
+        const result = await db.disqualifyRunner(status, user_id, racer_id, email);
         return res.status(200).json(result);
     }catch (e) {
         console.log(e);
