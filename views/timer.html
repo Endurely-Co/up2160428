@@ -227,24 +227,24 @@
       showToast("Error talking to your gps: " + error.message);
     }
 
-    // function success(position){
-    //   formData['longitude'] = position.coords.longitude;
-    //   formData["latitude"] = position.coords.latitude;
-    //
-    //   fetch('/api/racer-position', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(formData)
-    //   }).then(function(response) {
-    //     return response.json();
-    //   }).then(function(races) {
-    //     console.log('login_position', races);
-    //   }).catch(function(error) {
-    //     console.log(error);
-    //   });
-    // }
+    function success(position){
+      formData['longitude'] = position.coords.longitude;
+      formData["latitude"] = position.coords.latitude;
+
+      fetch('/api/racer-position', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      }).then(function(response) {
+        return response.json();
+      }).then(function(races) {
+        console.log('login_position', races);
+      }).catch(function(error) {
+        console.log(error);
+      });
+    }
 
     function doInitialStartTime(){
       fetch('/api/start-time', {
@@ -389,19 +389,19 @@
     // });
 
 
-    function showToast(message, type){
-      toast.textContent = message;
-      if(type === 'success'){
-        toast.style.backgroundColor = 'green';
-      }else{
-        toast.style.backgroundColor = 'red';
-      }
-      toast.className = 'toast show';
-
-      setTimeout((event) => {
-        toast.className = 'toast';
-      }, 3000); //queryForOnlyRacers queryForUserById
-    } //queryRegisteredRaces user_id, race_id, disqualified requestAllRacers
+    // function showToast(message, type){
+    //   toast.textContent = message;
+    //   if(type === 'success'){
+    //     toast.style.backgroundColor = 'green';
+    //   }else{
+    //     toast.style.backgroundColor = 'red';
+    //   }
+    //   toast.className = 'toast show';
+    //
+    //   setTimeout((event) => {
+    //     toast.className = 'toast';
+    //   }, 3000); //queryForOnlyRacers queryForUserById
+    // } //queryRegisteredRaces user_id, race_id, disqualified requestAllRacers
 
   }else{
     console.log('error', 'loaded');

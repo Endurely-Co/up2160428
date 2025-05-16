@@ -1,10 +1,19 @@
-import {DatabaseSync} from "node:sqlite";
+import sqlite3 from 'sqlite3';
+sqlite3.verbose();
+
 import {fileURLToPath} from "url";
 import path from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const database = new DatabaseSync(`${__dirname}/race.db`);
+
+const database = new sqlite3.Database(`${__dirname}/race.db`, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+    if (err) {
+        console.error('Error opening database:', err.message);
+    } else {
+        console.log('Connected to SQLite database');
+    }
+});
 
 const initDatabase = `
     CREATE TABLE IF NOT EXISTS user(

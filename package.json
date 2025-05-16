@@ -1,10 +1,10 @@
 {
-  "name": "new-webprog",
-  "version": "0.0.0",
+  "name": "up2160428",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node --experimental-sqlite ./bin/www"
+    "start": "node bin/www.js"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
@@ -12,6 +12,7 @@
     "express": "5.0.0",
     "morgan": "~1.9.1",
     "node-localstorage": "^3.0.5",
+    "sqlite3": "^5.1.7",
     "ws": "^8.18.2"
   }
 }

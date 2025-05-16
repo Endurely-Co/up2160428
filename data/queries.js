@@ -1,18 +1,15 @@
 import database from "./model.js";
 
-const queryTurnOnForeignKey = `PRAGMA foreign_keys = ON;`;
 
-/*
- address VARCHAR(100)  NOT NULL,
-        postcode VARCHAR(15)  NOT NULL,
-        city VARCHAR(100)  NOT NULL,
- */
+// Turn on foreign keys (run once on startup)
+database.run(`PRAGMA foreign_keys = ON;`);
 
-const newRace = `INSERT INTO race(name, start_time, cutoff_time, email, address, postcode, city)
-VALUES(?, ?, ?, ?, ?, ?, ?)`;
+// Queries
 
-// race_started is used for start and pause race
-// race_started True means the race is still running False is the race has been paused.
+const queryLatestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
+
+const newRace = `INSERT INTO race(name, start_time, cutoff_time, email, address, postcode, city) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
 const updateRaceStart = `UPDATE race SET race_started = ?, recorded_start_time = ? WHERE id = ?`;
 
 const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE id = ?`;
@@ -20,8 +17,6 @@ const updateRaceEnd = `UPDATE race SET race_started = ?, cutoff_time = ? WHERE i
 const queryRaceStatus = `SELECT race_started, start_time FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const latestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
-
-const queryLatestRace = `SELECT * FROM race ORDER BY start_time DESC LIMIT 1`;
 
 const queryStartTime = `SELECT recorded_start_time, race_started FROM race ORDER BY start_time LIMIT 1`;
 
@@ -46,7 +41,6 @@ const queryUserRaceRegistered = `SELECT * FROM registered_race WHERE user_id = ?
 const queryUserForDisqualified = `SELECT disqualified FROM registered_race WHERE user_id = ?`;
 
 const queryRegisteredRaceById = `SELECT * FROM registered_race WHERE user_id = ? AND race_id = ?`;
-// const updateUserRace = `UPDATE race SET racer_id = ? WHERE id = ?`;
 
 const queryForUser = `SELECT * FROM user WHERE email = ?`;
 
@@ -60,8 +54,7 @@ const queryForUserById = `SELECT * FROM user WHERE id = ?`;
 
 const queryCheckedLogIn = `SELECT isLoggedIn, user_type, race_id FROM user WHERE email = ?`;
 
-const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)
-RETURNING id, name, email, isLoggedIn, user_type, race_id`;
+const insertNewUser = `INSERT INTO user (name, email, isLoggedIn, user_type, race_id) VALUES (?, ?, ?, ?, ?)`;
 
 const queryRacerId = `SELECT race_id FROM race WHERE email = ?`;
 
@@ -77,11 +70,11 @@ const selectAllRacePosition = `SELECT * FROM racer_position`;
 
 const selectRacer = `SELECT * FROM racer_position ORDER BY latitude DESC, longitude DESC`;
 
-const insertRaceResult = `INSERT OR REPLACE INTO race_record(runner_position, racer_id) VALUES (?, ?);`
+const insertRaceResult = `INSERT OR REPLACE INTO race_record(runner_position, racer_id) VALUES (?, ?);`;
 
-const queryRaceResults = `SELECT * FROM race_record ORDER BY runner_position ASC;`
+const queryRaceResults = `SELECT * FROM race_record ORDER BY runner_position ASC;`;
 
-const insertNewLaps = `INSERT OR REPLACE INTO race_laps(racer_pos, laps_time, racer_id, race_id) VALUES (?, ?, ?, ?);`
+const insertNewLaps = `INSERT OR REPLACE INTO race_laps(racer_pos, laps_time, racer_id, race_id) VALUES (?, ?, ?, ?);`;
 
 const queryNewLaps = `SELECT * FROM race_laps`;
 
@@ -90,222 +83,207 @@ const queryUserType = `SELECT user_type FROM user WHERE email = ?`;
 const deleteRaceById = `DELETE FROM race WHERE user_id = ?`;
 
 
-async function checkRacerStatus(email){
-    const isUserDisqualified = await database.prepare(queryUserForDisqualified);
-    const userId = await getUserIdByEmail(email);
-    return isUserDisqualified.get(userId);
-}
-
-async function getRaces(){
-    const races = await database.prepare(queryRaces);
-    return races.all();
-}
-
-async function searchRacerById(query){
-    const queryRacer = await database.prepare(queryRacerById);
-   // const searchedRacer =
-
-    return queryRacer.all(`%${query}`);
-}
-
-
-async function getRacerId(email){
-    const racerNumber = await database.prepare(queryRacerId);
-    return racerNumber.get(email);
-}
-
-
-async function hasRegisteredForRace(email){
-    const registerRace = await database.prepare(queryUserRaceRegistered);
-    const userId = await getUserIdByEmail(email);
-    console.log('registerRace', registerRace.get(userId));
-    return registerRace.get(userId) !== undefined;
-}
-
-async function recordLaps(racerPos, raceTime, racerId, raceId){
-    const newLaps = await database.prepare(insertNewLaps);
-    newLaps.run(racerPos, raceTime, racerId, raceId);
-    return {
-        message: 'Laps record added successfully.',
-    }
-}
-
-async function getNewLaps(){
-    const newLaps = await database.prepare(queryNewLaps);
-    return newLaps.all();
-}
-
-async function getRacers(){
-    const racers = await database.prepare(queryForOnlyRacers);
-    return racers.all();
-}
-
-async function turnOnForeignKeySupport(){
-    database.prepare(queryTurnOnForeignKey);
-    console.log('ALLOWING FOREIGN KEYS');
-}
-
-
-// TODO: Refactor later on
-async function updateStartRace(startTime, started){
-    try {
-        const raceById = await database.prepare(queryRaceId);
-        const updateRace = await database.prepare(updateRaceStart);
-
-        updateRace.run(started ? 1 : 0, isoToSQLiteDatetime(startTime), raceById.all()[0].id);
-        return {
-            message: 'Race started'
-        };
-    }catch (err) {
-        return {
-            error: err.message
-        }
-    }
-}
-
-async function getRaceStartTime(){
-    //database.prepare(`DELETE FROM race WHERE start_time != null`);
-    const startTime = await database.prepare(queryStartTime);
-    console.log('race_started_race_started', startTime.all());
-    const startTimes = startTime.all();
-
-    if (startTimes.length ===0){
-        return {start_time: null, end_time: null};
-    }
-    return {
-        recorded_start_time: startTimes[0].recorded_start_time,
-        race_started: startTimes[0].race_started
-    }
-}
-
-
 function isoToSQLiteDatetime(dateTime) {
-    const date = new Date('2025-05-01T19:06:52.885Z');
-    date.setTime(dateTime);
+    const date = new Date(dateTime);
     const pad = (n) => String(n).padStart(2, '0');
-
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
         `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-async function updateEndRace(endTime){
+
+async function checkRacerStatus(email) {
+    const user = await getAsync(queryForUserIdByEmail, [email]);
+    if (!user) return null;
+    const disqualified = await getAsync(queryUserForDisqualified, [user.id]);
+    return disqualified;
+}
+
+async function getRaces() {
+    return allAsync(queryRaces);
+}
+
+async function searchRacerById(query) {
+    return allAsync(queryRacerById, [`%${query}%`]);
+}
+
+async function getRacerId(email) {
+    return getAsync(queryRacerId, [email]);
+}
+
+async function hasRegisteredForRace(email) {
+    const user = await getAsync(queryForUserIdByEmail, [email]);
+    if (!user) return false;
+    const reg = await getAsync(queryUserRaceRegistered, [user.id]);
+    return !!reg;
+}
+
+async function recordLaps(racerPos, raceTime, racerId, raceId) {
+    await runAsync(insertNewLaps, [racerPos, raceTime, racerId, raceId]);
+    return { message: 'Laps record added successfully.' };
+}
+
+async function getNewLaps() {
+    return allAsync(queryNewLaps);
+}
+
+async function getRacers() {
+    return allAsync(queryForOnlyRacers);
+}
+
+async function updateStartRace(startTime, started) {
     try {
-        const raceById = await database.prepare(queryRaceId);
-        const updateRace = await database.prepare(updateRaceEnd);
-        // reset the start race '1970-01-01 01:00:00'
-        updateRace.run(0, isoToSQLiteDatetime(endTime), raceById.all()[0].id);
-        console.log('Race updated successfully.',raceById.all());
-        return {
-            message: 'Race ended'
-        };
-    }catch (err) {
-        return {
-            error: err.message
+        const race = await getAsync(queryRaceId);
+        if (!race) throw new Error('No race found');
+        await runAsync(updateRaceStart, [started ? 1 : 0, isoToSQLiteDatetime(startTime), race.id]);
+        return { message: 'Race started' };
+    } catch (err) {
+        return { error: err.message };
+    }
+}
+
+async function updateEndRace(endTime) {
+    try {
+        const race = await getAsync(queryRaceId);
+        if (!race) throw new Error('No race found');
+        await runAsync(updateRaceEnd, [0, isoToSQLiteDatetime(endTime), race.id]);
+        return { message: 'Race ended' };
+    } catch (err) {
+        return { error: err.message };
+    }
+}
+
+async function createNewRace(email, name, cutoff_time, start_time, address, postcode, city) {
+    await runAsync(newRace, [name, start_time, cutoff_time, email, address, postcode, city]);
+    return { email, name, cutoff_time, start_time, address, postcode, city };
+}
+
+async function createNewUser(email, name, userType) {
+    try {
+        let lastRaceNumber = null;
+        if (userType === 'runner') {
+            const lastRace = await getAsync(queryRaceNum);
+            lastRaceNumber = lastRace ? getRaceId([lastRace]) : null;
         }
+        const result = await runAsync(insertNewUser, [name, email, 'false', userType, lastRaceNumber]);
+        // To get inserted row id or data, you'd run a SELECT afterwards or use this.lastID
+        return { id: result.lastID, name, email, racer_id: lastRaceNumber };
+    } catch (err) {
+        return { error: err.message };
     }
 }
 
-async function getRegisteredRaces(){
-    const registeredRaces = database.prepare(queryRegisteredRaces);
-    const rRace =registeredRaces.all();
-    return rRace;
+async function getUserIdByEmail(email) {
+    const user = await getAsync(queryForUserIdByEmail, [email]);
+    return user ? user.id : null;
 }
 
-async function getRegisteredRaceById(email){
-    const registeredRaces = database.prepare(queryRegisteredRaceById);
-    const curUId = await getUserIdByEmail(email);
-    const raceIdQuery = await database.prepare(queryRaceId);
-    const racerId = raceIdQuery.get().id;
-    console.log('curUId', racerId);
-    //const registeredRace = registeredRaces.get(curUId);
-    return registeredRaces.get(curUId, racerId);
+async function requestLatestRace() {
+    const recent = await allAsync(latestRace);
+    return recent.length === 0 ? [] : [recent[0]];
 }
 
-async function updateRacerPosition(latitude, longitude, racer_id) {
-    const racer = await database.prepare(insertRacerPosition);
-    racer.get(latitude, longitude, racer_id);
+async function checkLoggedIn(email) {
+    if (email === null) {
+        return {
+            error: "User is not signed in!",
+            redirect_url: '/login',
+        };
+    }
+    const row = await getAsync(queryCheckedLogIn, [email]);
+    const { user_type, isLoggedIn: hasLoggedIn, race_id } = row;
     return {
-        latitude: latitude,
-        longitude: longitude,
-        user: racer_id,
-    }
-}
-
-async function getAllUsers(){
-    const users =await database.prepare(queryForAllUsers);
-    return users.all();
-}
-
-async function getAllRacePosition(){
-    const allRacePosition = await database.prepare(selectAllRacePosition);
-    return allRacePosition.all();
-}
-
-
-async function getRaceStatus(){
-    const raceStatusQuery = await database.prepare(queryRaceStatus);
-    const raceStatusQueries =  raceStatusQuery.all();
-    if(raceStatusQueries.length === 0){
-        return -1;
-    }
-    const raceStatus = raceStatusQueries[0];
-    console.log('raceStatus', raceStatus.race_started, raceStatus.start_time);
-    return raceStatus.race_started;
-}
-
-async function requestAllRacers() {
-    const disqualifiedRacers = await database.prepare(queryDisqualifiedUsers);
-    const disqualified = disqualifiedRacers.all();
-    const racerQuery = await database.prepare(queryRegisteredRaces);
-
-    const racersData = await Promise.all(racerQuery.all().map(async (racer) => {
-        const userById = await database.prepare(queryForUserById);
-        return userById.get(racer.user_id);
-    }));
-    const racers = [];
-    /*
-    racers.push({
-            id: racer.id,
-            name: racer.name,
-            email: racer.email,
-            isLoggedIn: racer.isLoggedIn,
-            user_type: racer.user_type,
-            race_id: racer.race_id,
-            disqualified:
-        });
-     */
-
-    console.log('racersData_racersData', racersData);
-    for(let i =0; i < racersData.length ; i++){
-        const racer = racersData[i];
-        racers.push({
-            id: racer.id,
-            name: racer.name,
-            email: racer.email,
-            isLoggedIn: racer.isLoggedIn,
-            user_type: racer.user_type,
-            race_id: racer.race_id,
-            disqualified: disqualified[i].disqualified
-        });
-    }
-    return {
-        racers: racers
+        user_logged_in: hasLoggedIn,
+        user_type,
+        redirect_url: '/',
+        race_id,
     };
 }
 
-// @deprecated
-async function requestRacerPosition(){
-    const racer = await database.prepare(selectRacer);
-    const userById = await database.prepare(queryForUserById);
-    console.log('makeRacerPosition', racer.all(), userById);
-    const result = racer.all().map(racerVal =>{
-        //racerVal.id
-        return makeRacerPosition(racerVal, userById.get(racerVal.racer_id));
+
+function runAsync(sql, params=[]) {
+    return new Promise((resolve, reject) => {
+        database.run(sql, params, function(err) {
+            if (err) reject(err);
+            else resolve(this);  // this.lastID, this.changes
+        });
     });
+}
+
+function getAsync(sql, params=[]) {
+    return new Promise((resolve, reject) => {
+        database.get(sql, params, (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function allAsync(sql, params=[]) {
+    return new Promise((resolve, reject) => {
+        database.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
+
+async function invalidateUser(email) {
+    await changeUserStatus(email, false);
     return {
-        data: result
+        message: 'User has been logged out',
     };
 }
+
+async function changeUserStatus(email, isLoggedIn = true) {
+    const user = isLoggedIn ? await getAsync(queryForUser, [email]) : undefined;
+    if (user !== undefined) {
+        await runAsync(updateUserLogin, [isLoggedIn.toString(), email]);
+        return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            user_type: user.user_type,
+            isLoggedIn: user.isLoggedIn,
+            racer_id: user.racer_id,
+        };
+    }
+    return { error: 'User not logged in' };
+}
+
+async function requestSingleRace() {
+    return allAsync(queryLatestRace);
+}
+
+async function registerRace(email) {
+    const race = await requestLatestRace();
+    const user = await getAsync(queryForUserIdByEmail, [email]);
+    await runAsync(registerUser, [user.id, race[0].id, 0]);
+    return {
+        message: 'Race was registered',
+        racer_id: race[0].id
+    };
+}
+
+async function getDisqualifiedRacers() {
+    return allAsync(queryDisqualifiedUsers);
+}
+
+async function disqualifyRunner(status, racerId) {
+    const user = await getAsync(queryRacerByRaceId, [racerId]);
+    if (user.user_type !== 'volunteer' && user.user_type !== 'organiser') {
+        return {
+            error: "You don't have permission to perform operations.",
+        };
+    }
+    await runAsync(updateDisqualifyUser, [status, user.id]);
+    return {
+        message:
+            status === 1
+                ? `${racerId} has been successfully disqualified`
+                : `${racerId} is back in the race`,
+    };
+}
+
 
 function makeRacerPosition(racer, user){
     return {
@@ -316,176 +294,107 @@ function makeRacerPosition(racer, user){
     };
 }
 
-async function requestSingleRace(){
-    const races = await database.prepare(queryLatestRace);
-    return races.all();
+async function requestRacerPosition() {
+    const racerVals = await allAsync(selectRacer);
+    const result = await Promise.all(
+        racerVals.map(async (racerVal) => {
+            const user = await getAsync(queryForUserById, [racerVal.racer_id]);
+            return makeRacerPosition(racerVal, user);
+        })
+    );
+    return { data: result };
 }
 
- async function requestLatestRace(){
-    const recent = await database.prepare(latestRace);
-     //const user = await database.prepare(queryRacerId);
-    return recent.all().length === 0 ? [] : [recent.all()[0]];
+async function requestAllRacers() {
+    const disqualified = await allAsync(queryDisqualifiedUsers);
+    const racers = await allAsync(queryRegisteredRaces);
+
+    const racersData = await Promise.all(
+        racers.map(async (racer) => {
+            return getAsync(queryForUserById, [racer.user_id]);
+        })
+    );
+
+    const result = racersData.map((racer, i) => ({
+        id: racer.id,
+        name: racer.name,
+        email: racer.email,
+        isLoggedIn: racer.isLoggedIn,
+        user_type: racer.user_type,
+        race_id: racer.race_id,
+        disqualified: disqualified[i] ? disqualified[i].disqualified : null,
+    }));
+
+    return { racers: result };
 }
 
-// Normally, this thread would be lock to prevent interference
-// That's yet to be covered in this course hence this
-function getRaceId(racerIds){
-    const charLimit = 4
-    if(racerIds.length === 0){
-        return '0001';
-    }
-    const raceIdInt = parseInt(racerIds[0].race_id) + 1;
-    const zeroCount =
-        charLimit - raceIdInt.toString().length; // v = 2, 0002
-    let raceId = ''
-    for (let i = 0; i < zeroCount; i++) {
-        raceId += '0';
-    }
-
-    return `${raceId}${raceIdInt}`;
+async function getRaceStatus() {
+    const raceStatusQueries = await allAsync(queryRaceStatus);
+    if (raceStatusQueries.length === 0) return -1;
+    const raceStatus = raceStatusQueries[0];
+    console.log('raceStatus', raceStatus.race_started, raceStatus.start_time);
+    return raceStatus.race_started;
 }
 
-async function disqualifyRunner(status, racerId){
-    // 0: disqualified
-    // 1: not disqualified
-    const registerRace = database.prepare(updateDisqualifyUser);
-    const userByRaceIdQuery = await database.prepare(queryRacerByRaceId);
-    const user = userByRaceIdQuery.get(racerId);
-    if (user.user_type !== 'volunteer' || user.user_type !== 'organiser') {
-        return {
-            error: "You don't have permission to perform operations.",
-        }
-    }
-    registerRace.run(status, user.id);
+async function getAllUsers() {
+    return allAsync(queryForAllUsers);
+}
+
+async function updateRacerPosition(latitude, longitude, racer_id) {
+    await runAsync(insertRacerPosition, [latitude, longitude, racer_id]);
     return {
-        message: status === 1 ? `${racerId} has been successfully disqualified`: `${racerId} is back in the race`
-    }
-}
-
-async function getDisqualifiedRacers(){
-    const disqualifiedRacers = await database.prepare(queryDisqualifiedUsers);
-    return disqualifiedRacers.all();
-}
-
-async function registerRace(email){
-    const race = await requestLatestRace();
-    const queryUser = database.prepare(queryForUserIdByEmail)
-    const user = queryUser.get(email);
-    const registerRace = database.prepare(registerUser);
-    // 0: disqualified
-    // 1: not disqualified
-    registerRace.get(user.id, race[0].id, 0); //race_id
-    return {
-        message: 'Race was registered'
-    }
-}
-
-async function createNewRace(email, name, cutoff_time, start_time, address, postcode, city){
-    const race = await database.prepare(newRace);
-    race.get(name, start_time, cutoff_time,  email, address, postcode, city);
-    // name, start_time, cutoff_time, email, address, postcode, city
-    return {
-        email : email,
-        name : name,
-        cutoff_time : cutoff_time,
-        start_time : start_time,
-        address : address,
-        postcode : postcode,
-        city : city
-    }
-}
-
-async function checkLoggedIn(email) {
-    //const email = cache.getLogIn();
-    console.log('new_data_email', email);
-
-    if (email === null) {
-        return {
-            error: "User is not signed in!",
-            redirect_url: '/login'
-        }
-    }
-    const {user_type, hasLoggedIn, race_id} = await database.prepare(queryCheckedLogIn).get(email);
-    return {
-        user_logged_in: hasLoggedIn,
-        user_type: user_type,
-        redirect_url: '/',
-        race_id: race_id
+        latitude: latitude,
+        longitude: longitude,
+        user: racer_id,
     };
 }
 
-async function createNewUser(email, name, userType){
-    try{
-        const insert = await database.prepare(insertNewUser);
-        const queryLastRaceNumber = await database.prepare(queryRaceNum);
-        const lastRaceNumber = userType === 'runner' ?
-            getRaceId(queryLastRaceNumber.all()) : null;
-
-        const newUser = insert.get(name, email, 'false', userType, lastRaceNumber);
-        return {
-            id: newUser.id,
-            name: newUser.name,
-            email: newUser.email,
-            racer_id: lastRaceNumber
-        };
-    }catch(err){
-        return {
-            error: err.message,
-        }
-    }
+async function getRegisteredRaceById(email) {
+    const curUId = await getUserIdByEmail(email);
+    const raceIdRow = await getAsync(queryRaceId);
+    if (!raceIdRow) throw new Error('No race found');
+    const raceId = raceIdRow.id;
+    return getAsync(queryRegisteredRaceById, [curUId, raceId]);
 }
 
-async function invalidateUser(email) {
-   // const email = cache.getLogIn();
-    //cache.clear();
-    await changeUserStatus(email, false);
+async function getRegisteredRaces() {
+    return allAsync(queryRegisteredRaces);
+}
+
+async function getRaceStartTime() {
+    const startTimes = await allAsync(queryStartTime);
+    console.log('startTimes', startTimes)
+    if (startTimes === undefined ||startTimes.length === 0) {
+        return { recorded_start_time: null, race_started: null };
+    }
     return {
-        message: 'User has been logged out'
+        recorded_start_time: startTimes[0].recorded_start_time,
+        race_started: startTimes[0].race_started,
     };
 }
 
-
-async function getUserIdByEmail(email){
-    const query = database.prepare(queryForUserIdByEmail);
-    const user = query.get(email)
-    return user.id;
+async function getAllRacePosition() {
+    return allAsync(selectAllRacePosition);
 }
 
 
-async function changeUserStatus(email, isLoggedIn = true){
-    const query = database.prepare(queryForUser);
-    const user = isLoggedIn ? query.get(email) : undefined;
-    console.log('new_data_email1', user, email, isLoggedIn);
-    if (user !== undefined){
-        const signUserIn = await database.prepare(updateUserLogin);
-        signUserIn.get(isLoggedIn.toString(), email); // Update log in
-        //cache.setLogIn(email);
-        return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            user_type: user.user_type,
-            isLoggedIn: user.isLoggedIn, //todo: to be changed to snake case
-            racer_id: user.racer_id,
-        }
-    }
-    return {
-        error: "User not logged in",
-    };
-}
+// Add more functions similarly...
 
 export default {
-    createNewRace, changeUserStatus,
-    requestLatestRace, createNewUser,
-    checkLoggedIn, invalidateUser,
-    requestSingleRace, requestRacerPosition, getAllUsers,
-    getUserById: getUserIdByEmail, registerRace,
-    getRegisteredRaces, getRegisteredRaceById,
-    getAllRacePosition, updateStartRace,
-    getRacers, requestAllRacers, updateEndRace,
-    getNewLaps, getRaceStartTime,
-    getRaceStatus, hasRegisteredForRace,
-    searchRacerById, recordLaps,
-    disqualifyRunner, getDisqualifiedRacers,
-    getRaces, checkRacerStatus
+    database, requestSingleRace,
+    checkRacerStatus, changeUserStatus,
+    getRaces, invalidateUser, getDisqualifiedRacers,
+    searchRacerById, disqualifyRunner,
+    getRacerId, registerRace,
+    hasRegisteredForRace, requestRacerPosition,
+    recordLaps, requestAllRacers,
+    getNewLaps, getRaceStatus,
+    getRacers, getAllUsers, updateRacerPosition,
+    updateStartRace, getRegisteredRaceById,
+    updateEndRace, getRegisteredRaces,
+    createNewRace, getRaceStartTime,
+    createNewUser, getAllRacePosition,
+    getUserIdByEmail,
+    requestLatestRace,
+    checkLoggedIn
 };

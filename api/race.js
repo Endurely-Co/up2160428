@@ -225,7 +225,7 @@ router.post('/racer-status', async function racerStatus(req, res)  {
         console.log('racerStatus ---->', racerStatus);
         return res.status(200).json({
             data: {
-                is_disqualified: racerStatus.disqualified === 1
+                is_disqualified: racerStatus ? racerStatus.disqualified === 1 : null
             }
         });
     }catch (e) {

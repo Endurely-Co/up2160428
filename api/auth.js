@@ -2,7 +2,6 @@ import express from 'express';
 const router = express.Router();
 import db from '../data/queries.js';
 import cache from "../data/cache.js";
-import database from "../data/model.js";
 
 // router.get('/login', function(req, res, next) {
 //     res.send('Logged in!');

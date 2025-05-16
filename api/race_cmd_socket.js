@@ -1,5 +1,4 @@
-import {WebSocketServer} from 'ws';
-import * as url from "node:url";
+import WebSocket, {WebSocketServer} from 'ws';
 
 const webSocketServer = new WebSocketServer({
     port: 8081,
